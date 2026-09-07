@@ -11,6 +11,8 @@ esp32.svd
 src/plugins/*
 debug.svd
 z.*
+Config.h
+Extended.config.h
 # PlatformIO
 .pio/
 .pioenvs/

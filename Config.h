@@ -17,7 +17,7 @@
 #define HOST_NAME                "OnStepX" // nStep", 本设备的主机名 最多 16 个字符                                              调整
 
 // 引脚映射 ----------------------------------------------- 查看 https://onstep.groups.io/g/main/wiki/Configuration_Controller#PINMAP
-#define PINMAP                        OFF //    OFF, 可选值 MiniPCB, MiniPCB2, MaxPCB4, MaxESP4, MaxSTM3, FYSETC_E4,         <-必填
+#define PINMAP                    MaxESP4 //    OFF, 可选值 MiniPCB, MiniPCB2, MaxPCB4, MaxESP4, MaxSTM3, FYSETC_E4,         <-必填
                                           //         BTT_SKR_PRO 等 其他主板及更多信息请查看 ~/src/Constants.h
 
 // 串口命令通道 -------------------------------------------- 查看 https://onstep.groups.io/g/main/wiki/Configuration_Controller#SERIAL_PORTS
@@ -27,7 +27,7 @@
 #define SERIAL_C_BAUD_DEFAULT         OFF //    OFF, n 波特率同上 串口分配请查看 src/pinmaps/                                     少改
 #define SERIAL_D_BAUD_DEFAULT         OFF //    OFF, n 波特率同上 串口分配请查看 src/pinmaps/                                     少改
 #define SERIAL_E_BAUD_DEFAULT         OFF //    OFF, n 波特率同上 串口分配请查看 src/pinmaps/                                     少改
-#define SERIAL_RADIO                  OFF //    OFF, 使用 BLUETOOTH 或 WIFI_ACCESS_POINT 或 WIFI_STATION 仅支持 ESP32              可选
+#define SERIAL_RADIO            BLUETOOTH //    OFF, 使用 BLUETOOTH 或 WIFI_ACCESS_POINT 或 WIFI_STATION 仅支持 ESP32              可选
 
 // 状态指示 ----------------------------------------------- 查看 https://onstep.groups.io/g/main/wiki/Configuration_Controller#STATUS_LED
 #define STATUS_LED                    OFF //    OFF, 无错误时常亮 否则按错误代码闪烁                                             可选
@@ -56,7 +56,7 @@
 // 常见型号 A4988, DRV8825, LV8729, S109, TMC2130, TMC5160, TMC2209 等
 
 // 轴1 赤经或方位 ----------------------------------------------------- 查看 https://onstep.groups.io/g/main/wiki/Configuration_Axes
-#define AXIS1_DRIVER_MODEL            OFF //    OFF, 在两个轴中填写上方列出的电机驱动器型号以启用架台                                <-常用
+#define AXIS1_DRIVER_MODEL        TMC2209 //    OFF, 在两个轴中填写上方列出的电机驱动器型号以启用架台                                <-常用
 
 // 如果已启用轴运行时设置 则会忽略下方配置 可在 SWS 中禁用或清除 NV/EEPROM
 // \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ 
@@ -76,7 +76,7 @@
 #define AXIS1_DRIVER_IGOTO            OFF //    OFF, n 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN                                可选
 // /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /
 
-#define AXIS1_DRIVER_STATUS           OFF //    OFF, ON, HIGH 或 LOW 用于驱动器状态信息和故障检测                                  可选
+#define AXIS1_DRIVER_STATUS            ON //    OFF, ON, HIGH 或 LOW 用于驱动器状态信息和故障检测                                  可选
 
 #define AXIS1_DRIVER_DECAY            OFF //    OFF, 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP                               少改
 #define AXIS1_DRIVER_DECAY_GOTO       OFF //    OFF, 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE                            少改
@@ -92,7 +92,7 @@
                                           //         |HYST(n) 其中 n=0..1023 ADU 表示正负迟滞范围
 
 // 轴2 赤纬或高度 ----------------------------------------------------- 查看 https://onstep.groups.io/g/main/wiki/Configuration_Axes
-#define AXIS2_DRIVER_MODEL            OFF //    OFF, 在两个轴中填写上方列出的电机驱动器型号以启用架台                                <-常用
+#define AXIS2_DRIVER_MODEL        TMC2209 //    OFF, 在两个轴中填写上方列出的电机驱动器型号以启用架台                                <-常用
 
 // 如果已启用轴运行时设置 则会忽略下方配置 可在 SWS 中禁用或清除 NV/EEPROM
 // \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/
@@ -112,7 +112,7 @@
 #define AXIS2_DRIVER_IGOTO            OFF //    OFF, n 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN                                可选
 // /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /
 
-#define AXIS2_DRIVER_STATUS           OFF //    OFF, ON, HIGH 或 LOW 轮询驱动器状态信息和故障检测                                  可选
+#define AXIS2_DRIVER_STATUS            ON //    OFF, ON, HIGH 或 LOW 轮询驱动器状态信息和故障检测                                  可选
 
 #define AXIS2_DRIVER_DECAY            OFF //    OFF, 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP                               少改
 #define AXIS2_DRIVER_DECAY_GOTO       OFF //    OFF, 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE                            少改
