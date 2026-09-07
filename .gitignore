@@ -27,6 +27,7 @@ build/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+.serena/
 
 # 系统文件
 .DS_Store
