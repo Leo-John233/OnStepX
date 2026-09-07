@@ -11,3 +11,31 @@ esp32.svd
 src/plugins/*
 debug.svd
 z.*
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Arduino 编译缓存和输出
+build/
+*.bin
+*.elf
+*.hex
+*.map
+
+# 编辑器
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志和临时文件
+*.log
+*.tmp
+*.temp
+*.bak
+*~
