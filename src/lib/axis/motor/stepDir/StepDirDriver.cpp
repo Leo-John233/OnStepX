@@ -265,7 +265,13 @@ const char* StepDirDriver::name() {
 
 // update status info. for driver
 void StepDirDriver::updateStatus() {
-  if (statusMode == ON) {
+  bool readRegisterStatus = statusMode == ON;
+  #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF
+    const bool debugSelected = axisNumber == DEBUG_AXIS;
+    if (debugSelected) readRegisterStatus = true;
+  #endif
+
+  if (readRegisterStatus) {
     const unsigned long now = millis();
 
     if (now - timeLastStatusUpdate > 200U) {
@@ -279,10 +285,30 @@ void StepDirDriver::updateStatus() {
 
       timeLastStatusUpdate = now;
     }
-  } else
+  }
+
   if (statusMode == LOW || statusMode == HIGH) {
     status.fault = digitalReadEx(Pins->fault) == statusMode;
   }
+
+  #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF
+    if (debugSelected) {
+      const unsigned long now = millis();
+      if (now - timeLastDebugStatus >= 1000U) {
+        char s[192];
+        snprintf(s, sizeof(s),
+                 "Axis%u driver active=%u fault=%u stst=%u ola=%u olb=%u s2ga=%u s2gb=%u otpw=%u ot=%u",
+                 (unsigned int)axisNumber, (unsigned int)status.active, (unsigned int)status.fault,
+                 (unsigned int)status.standstill, (unsigned int)status.outputA.openLoad,
+                 (unsigned int)status.outputB.openLoad, (unsigned int)status.outputA.shortToGround,
+                 (unsigned int)status.outputB.shortToGround, (unsigned int)status.overTemperatureWarning,
+                 (unsigned int)status.overTemperature);
+        DL(s);
+        debugStatus();
+        timeLastDebugStatus = now;
+      }
+    }
+  #endif
 
   #if DEBUG == VERBOSE
     if ((status.outputA.shortToGround     != lastStatus.outputA.shortToGround) ||

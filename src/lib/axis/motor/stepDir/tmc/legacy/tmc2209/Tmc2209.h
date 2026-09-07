@@ -64,11 +64,17 @@ class StepDirTmc2209 : public TmcStepDirDriverNSG {
     // read status info. from driver
     void readStatus();
 
+    #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_UART) && DEBUG_UART == ON
+      // output complete UART/register status for the selected debug axis
+      void debugStatus() override;
+    #endif
+
     // TMC2209/TMC5160 specific
     uint32_t pc_pwm_grad  = 0x04; // default=4,   range 0 to 14  (PWM gradient scale using automatic current control)
     uint32_t pc_pwm_auto  = 0x01; // default=1,   range 0 to 1   (PWM automatic current control 0: off, 1: on)
     uint32_t pc_pwm_ofs   = 0x1e; // default=30,  range 0 to 255 (PWM user defined amplitude offset related to full motor current)
     
+    TMC2209Stepper::Status driverStatus = {};
     TMC2209Stepper *driver;
 };
 

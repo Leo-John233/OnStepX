@@ -74,6 +74,24 @@ void StepDirTmc5160::readStatus() {
   }
 }
 
+#if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_SPI) && DEBUG_SPI == ON
+void StepDirTmc5160::debugStatus() {
+  const uint32_t chopconf = driver.read_CHOPCONF();
+  char s[256];
+  snprintf(s, sizeof(s),
+           "Axis%u TMC5160 SPI status=0x%02X DRV_STATUS=0x%08lX CHOPCONF=0x%08lX stst=%u ola=%u olb=%u s2ga=%u s2gb=%u otpw=%u ot=%u stall=%u cs=%u fs=%u sg=%u",
+           (unsigned int)axisNumber, (unsigned int)driver.get_STATUS_byte(),
+           (unsigned long)driver.get_DRVSTATUS_raw(), (unsigned long)chopconf,
+           (unsigned int)driver.get_DRVSTATUS_stst(), (unsigned int)driver.get_DRVSTATUS_olA(),
+           (unsigned int)driver.get_DRVSTATUS_olB(), (unsigned int)driver.get_DRVSTATUS_s2gA(),
+           (unsigned int)driver.get_DRVSTATUS_s2gB(), (unsigned int)driver.get_DRVSTATUS_otpw(),
+           (unsigned int)driver.get_DRVSTATUS_ot(), (unsigned int)driver.get_DRVSTATUS_stallguard(),
+           (unsigned int)driver.get_DRVSTATUS_cs_actual(), (unsigned int)driver.get_DRVSTATUS_active(),
+           (unsigned int)driver.get_DRVSTATUS_result());
+  DL(s);
+}
+#endif
+
 // secondary way to power down not using the enable pin
 bool StepDirTmc5160::enable(bool state) {
   if (state) {

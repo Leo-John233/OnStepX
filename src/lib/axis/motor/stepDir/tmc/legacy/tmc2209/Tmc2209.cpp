@@ -127,15 +127,69 @@ void StepDirTmc2209::modeDecaySlewing() {
 }
 
 void StepDirTmc2209::readStatus() {
-  TMC2209Stepper::Status status_result = driver->getStatus();
-  status.outputA.shortToGround  = (bool)status_result.short_to_ground_a || (bool)status_result.low_side_short_a;
-  status.outputA.openLoad       = (bool)status_result.open_load_a;
-  status.outputB.shortToGround  = (bool)status_result.short_to_ground_b || (bool)status_result.low_side_short_b;
-  status.outputB.openLoad       = (bool)status_result.open_load_b;
-  status.overTemperatureWarning = (bool)status_result.over_temperature_warning;
-  status.overTemperature        = (bool)status_result.over_temperature_shutdown;
-  status.standstill             = (bool)status_result.standstill;
+  driverStatus = driver->getStatus();
+  status.outputA.shortToGround  = (bool)driverStatus.short_to_ground_a || (bool)driverStatus.low_side_short_a;
+  status.outputA.openLoad       = (bool)driverStatus.open_load_a;
+  status.outputB.shortToGround  = (bool)driverStatus.short_to_ground_b || (bool)driverStatus.low_side_short_b;
+  status.outputB.openLoad       = (bool)driverStatus.open_load_b;
+  status.overTemperatureWarning = (bool)driverStatus.over_temperature_warning;
+  status.overTemperature        = (bool)driverStatus.over_temperature_shutdown;
+  status.standstill             = (bool)driverStatus.standstill;
 }
+
+#if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_UART) && DEBUG_UART == ON
+void StepDirTmc2209::debugStatus() {
+  uint32_t raw = 0;
+  raw |= (uint32_t)driverStatus.over_temperature_warning;
+  raw |= (uint32_t)driverStatus.over_temperature_shutdown << 1;
+  raw |= (uint32_t)driverStatus.short_to_ground_a << 2;
+  raw |= (uint32_t)driverStatus.short_to_ground_b << 3;
+  raw |= (uint32_t)driverStatus.low_side_short_a << 4;
+  raw |= (uint32_t)driverStatus.low_side_short_b << 5;
+  raw |= (uint32_t)driverStatus.open_load_a << 6;
+  raw |= (uint32_t)driverStatus.open_load_b << 7;
+  raw |= (uint32_t)driverStatus.over_temperature_120c << 8;
+  raw |= (uint32_t)driverStatus.over_temperature_143c << 9;
+  raw |= (uint32_t)driverStatus.over_temperature_150c << 10;
+  raw |= (uint32_t)driverStatus.over_temperature_157c << 11;
+  raw |= (uint32_t)driverStatus.current_scaling << 16;
+  raw |= (uint32_t)driverStatus.stealth_chop_mode << 30;
+  raw |= (uint32_t)driverStatus.standstill << 31;
+
+  const bool communicating = driver->isCommunicating();
+  const bool setup = driver->isSetupAndCommunicating();
+  const uint8_t ifcnt = driver->getInterfaceTransmissionCounter();
+  const uint32_t tstep = driver->getInterstepDuration();
+  const uint16_t sgResult = driver->getStallGuardResult();
+  const uint16_t mscnt = driver->getMicrostepCounter();
+  const uint8_t pwmScaleSum = driver->getPwmScaleSum();
+  const int16_t pwmScaleAuto = driver->getPwmScaleAuto();
+  const uint8_t pwmOffsetAuto = driver->getPwmOffsetAuto();
+  const uint8_t pwmGradientAuto = driver->getPwmGradientAuto();
+
+  char s[256];
+  snprintf(s, sizeof(s),
+           "Axis%u TMC2209 UART comm=%u setup=%u IFCNT=%u DRV_STATUS=0x%08lX TSTEP=%lu SG=%u MSCNT=%u",
+           (unsigned int)axisNumber, (unsigned int)communicating, (unsigned int)setup,
+           (unsigned int)ifcnt, (unsigned long)raw, (unsigned long)tstep,
+           (unsigned int)sgResult, (unsigned int)mscnt);
+  DL(s);
+
+  snprintf(s, sizeof(s),
+           "Axis%u TMC2209 bits otpw=%u ot=%u s2ga=%u s2gb=%u lsa=%u lsb=%u ola=%u olb=%u t120=%u t143=%u t150=%u t157=%u cs=%u stealth=%u stst=%u pwm=%u/%d/%u/%u",
+           (unsigned int)axisNumber, (unsigned int)driverStatus.over_temperature_warning,
+           (unsigned int)driverStatus.over_temperature_shutdown, (unsigned int)driverStatus.short_to_ground_a,
+           (unsigned int)driverStatus.short_to_ground_b, (unsigned int)driverStatus.low_side_short_a,
+           (unsigned int)driverStatus.low_side_short_b, (unsigned int)driverStatus.open_load_a,
+           (unsigned int)driverStatus.open_load_b, (unsigned int)driverStatus.over_temperature_120c,
+           (unsigned int)driverStatus.over_temperature_143c, (unsigned int)driverStatus.over_temperature_150c,
+           (unsigned int)driverStatus.over_temperature_157c, (unsigned int)driverStatus.current_scaling,
+           (unsigned int)driverStatus.stealth_chop_mode, (unsigned int)driverStatus.standstill,
+           (unsigned int)pwmScaleSum, (int)pwmScaleAuto, (unsigned int)pwmOffsetAuto,
+           (unsigned int)pwmGradientAuto);
+  DL(s);
+}
+#endif
 
 // secondary way to power down not using the enable pin
 bool StepDirTmc2209::enable(bool state) {

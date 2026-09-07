@@ -210,6 +210,10 @@ int TmcSPI::refresh_DRVSTATUS() {
     // first write returns nothing, second the status data
     data_out=0;
     read(REG_DRVSTATUS, &data_out);
+    #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_SPI) && DEBUG_SPI == ON
+      status_byte = result;
+      ds_raw = data_out;
+    #endif
 
     // get the extended status info.
     if (data_out != 0 || result != 0) {
@@ -226,7 +230,10 @@ int TmcSPI::refresh_DRVSTATUS() {
       ds_result     = data_out & 0b1111111111;    // DRV_STATUS  0 stallGuard2 result
     } else {
       ds_stst = true; ds_olb = true; ds_ola = true; ds_s2ga = true; ds_s2gb = true; ds_otpw = true;
-      ds_ot = true; ds_stallguard = false; ds_cs_actual = 0; ds_fs_active = false; ds_result = 0;       
+      ds_ot = true; ds_stallguard = false; ds_cs_actual = 0; ds_fs_active = false; ds_result = 0;
+      #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_SPI) && DEBUG_SPI == ON
+        ds_raw = 0;
+      #endif
     }
 
     softSpi.end();

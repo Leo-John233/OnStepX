@@ -114,6 +114,11 @@ class StepDirDriver {
     // read status from driver
     virtual void readStatus() {}
 
+    #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF
+      // output transport/model-specific status for the selected debug axis
+      virtual void debugStatus() {}
+    #endif
+
     // different models of stepper drivers have different bit settings for microsteps
     // translate the human readable microsteps in the configuration to mode bit settings
     // returns bit code (0 to 7) or OFF if microsteps is not supported or unknown
@@ -127,6 +132,9 @@ class StepDirDriver {
       DriverStatus lastStatus = {false, {false, false}, {false, false}, false, false, false, false};
     #endif
     unsigned long timeLastStatusUpdate = 0;
+    #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF
+      unsigned long timeLastDebugStatus = 0;
+    #endif
 
     const StepDirDriverPins *Pins;
 

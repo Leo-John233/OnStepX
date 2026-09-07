@@ -35,6 +35,10 @@ class TmcSPI {
     inline int  get_DRVSTATUS_cs_actual()        { return ds_cs_actual;  }
     inline bool get_DRVSTATUS_active()           { return ds_fs_active;  }
     inline int  get_DRVSTATUS_result()           { return ds_result;     }
+    #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_SPI) && DEBUG_SPI == ON
+      inline uint32_t get_DRVSTATUS_raw()         { return ds_raw;        }
+      inline uint8_t get_STATUS_byte()            { return status_byte;   }
+    #endif
 
     // Chopper configuration
     bool refresh_CHOPCONF(byte micro_step_code);
@@ -161,6 +165,10 @@ class TmcSPI {
     uint16_t ds_cs_actual     = 0;
     bool     ds_fs_active     = false;
     uint16_t ds_result        = 0;
+    #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_SPI) && DEBUG_SPI == ON
+      uint32_t ds_raw         = 0;
+      uint8_t  status_byte    = 0;
+    #endif
 
     // COOLCONF settings
     uint32_t cl_semin         = 0;    // default=0, range 0 to 15  (Minimum stallGuard2 value for smart current control and smart current enable)
