@@ -119,6 +119,19 @@ public:
     return (isCommunicating() && (not isSetupAndCommunicating()));
   }
 
+  // expose communication state for OnStepX DEBUG_UART diagnostics
+  bool debugTransmitOnly() const {
+    return tx_only_;
+  }
+
+  bool debugBlocking() const {
+    return blocking_;
+  }
+
+  uint8_t debugVersion() {
+    return getVersion();
+  }
+
   // driver must be enabled before use it is disabled by default
   void enable()  {
     if (blocking_) return;

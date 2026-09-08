@@ -71,6 +71,9 @@ class StepDirTmc2209 : public TmcStepDirDriverNSG {
       struct DebugSnapshot {
         bool communicating;
         bool setup;
+        bool transmitOnly;
+        bool blocking;
+        uint8_t version;
         uint8_t ifcnt;
         uint32_t driverStatus;
         uint32_t tstep;

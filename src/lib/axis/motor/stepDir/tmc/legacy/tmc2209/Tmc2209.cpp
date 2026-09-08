@@ -166,10 +166,16 @@ void StepDirTmc2209::debugStatus() {
   const int16_t pwmScaleAuto = driver->getPwmScaleAuto();
   const uint8_t pwmOffsetAuto = driver->getPwmOffsetAuto();
   const uint8_t pwmGradientAuto = driver->getPwmGradientAuto();
+  const bool transmitOnly = driver->debugTransmitOnly();
+  const uint8_t version = driver->debugVersion();
+  const bool blocking = driver->debugBlocking();
 
   const bool changed = !debugSnapshotValid ||
                        communicating != debugLastSnapshot.communicating ||
                        setup != debugLastSnapshot.setup ||
+                       transmitOnly != debugLastSnapshot.transmitOnly ||
+                       blocking != debugLastSnapshot.blocking ||
+                       version != debugLastSnapshot.version ||
                        ifcnt != debugLastSnapshot.ifcnt ||
                        raw != debugLastSnapshot.driverStatus ||
                        tstep != debugLastSnapshot.tstep ||
@@ -183,6 +189,9 @@ void StepDirTmc2209::debugStatus() {
 
   debugLastSnapshot.communicating = communicating;
   debugLastSnapshot.setup = setup;
+  debugLastSnapshot.transmitOnly = transmitOnly;
+  debugLastSnapshot.blocking = blocking;
+  debugLastSnapshot.version = version;
   debugLastSnapshot.ifcnt = ifcnt;
   debugLastSnapshot.driverStatus = raw;
   debugLastSnapshot.tstep = tstep;
@@ -196,8 +205,9 @@ void StepDirTmc2209::debugStatus() {
 
   char s[256];
   snprintf(s, sizeof(s),
-           "Axis%u TMC2209 UART comm=%u setup=%u IFCNT=%u DRV_STATUS=0x%08lX TSTEP=%lu SG=%u MSCNT=%u",
+           "Axis%u TMC2209 UART comm=%u setup=%u tx_only_=%u blocking_=%u IOIN.VERSION=0x%02X IFCNT=%u DRV_STATUS=0x%08lX TSTEP=%lu SG=%u MSCNT=%u",
            (unsigned int)axisNumber, (unsigned int)communicating, (unsigned int)setup,
+           (unsigned int)transmitOnly, (unsigned int)blocking, (unsigned int)version,
            (unsigned int)ifcnt, (unsigned long)raw, (unsigned long)tstep,
            (unsigned int)sgResult, (unsigned int)mscnt);
   DL(s);

@@ -23,8 +23,8 @@
                                           //         CONSOLE 启用 VT100 调试控制台
                                           //         PROFILER 启用 VT100 任务分析器
 #define DEBUG_AXIS                      1 //    OFF, n 其中 n=1 至 9 且该轴必须已在 Config.h 中启用                              可选
-#define DEBUG_UART                     ON //    OFF, ON 每秒回读 DEBUG_AXIS 对应 TMC UART 轴的通信 计数 状态和运动寄存器                    可选
-                                          //             首次回读输出一次 后续仅在状态变化时输出 使用完毕后请关闭
+#define DEBUG_UART                     ON //    OFF, ON 每秒回读 TMC UART 通信模式 阻塞状态 IOIN 版本和驱动寄存器                         可选
+                                          //             使用 DEBUG_AXIS 选择轴 首次输出一次 后续仅在状态变化时输出 使用完毕后请关闭
 #define DEBUG_SPI                     OFF //    OFF, ON 每秒回读 DEBUG_AXIS 对应 TMC SPI 轴的状态字节 DRV_STATUS 和 CHOPCONF                  可选
                                           //             首次回读输出一次 后续仅在状态变化时输出 使用完毕后请关闭
 #define DEBUG_CAN                     OFF //    OFF, ON 记录 CAN 接口统计信息                                                  可选
