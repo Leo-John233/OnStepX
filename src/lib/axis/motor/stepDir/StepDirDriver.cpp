@@ -295,15 +295,29 @@ void StepDirDriver::updateStatus() {
     if (debugSelected) {
       const unsigned long now = millis();
       if (now - timeLastDebugStatus >= 1000U) {
-        char s[192];
-        snprintf(s, sizeof(s),
-                 "Axis%u driver active=%u fault=%u stst=%u ola=%u olb=%u s2ga=%u s2gb=%u otpw=%u ot=%u",
-                 (unsigned int)axisNumber, (unsigned int)status.active, (unsigned int)status.fault,
-                 (unsigned int)status.standstill, (unsigned int)status.outputA.openLoad,
-                 (unsigned int)status.outputB.openLoad, (unsigned int)status.outputA.shortToGround,
-                 (unsigned int)status.outputB.shortToGround, (unsigned int)status.overTemperatureWarning,
-                 (unsigned int)status.overTemperature);
-        DL(s);
+        const bool driverStatusChanged = !debugDriverStatusValid ||
+                                         status.active != debugLastDriverStatus.active ||
+                                         status.fault != debugLastDriverStatus.fault ||
+                                         status.standstill != debugLastDriverStatus.standstill ||
+                                         status.outputA.openLoad != debugLastDriverStatus.outputA.openLoad ||
+                                         status.outputB.openLoad != debugLastDriverStatus.outputB.openLoad ||
+                                         status.outputA.shortToGround != debugLastDriverStatus.outputA.shortToGround ||
+                                         status.outputB.shortToGround != debugLastDriverStatus.outputB.shortToGround ||
+                                         status.overTemperatureWarning != debugLastDriverStatus.overTemperatureWarning ||
+                                         status.overTemperature != debugLastDriverStatus.overTemperature;
+        if (driverStatusChanged) {
+          char s[192];
+          snprintf(s, sizeof(s),
+                   "Axis%u driver active=%u fault=%u stst=%u ola=%u olb=%u s2ga=%u s2gb=%u otpw=%u ot=%u",
+                   (unsigned int)axisNumber, (unsigned int)status.active, (unsigned int)status.fault,
+                   (unsigned int)status.standstill, (unsigned int)status.outputA.openLoad,
+                   (unsigned int)status.outputB.openLoad, (unsigned int)status.outputA.shortToGround,
+                   (unsigned int)status.outputB.shortToGround, (unsigned int)status.overTemperatureWarning,
+                   (unsigned int)status.overTemperature);
+          DL(s);
+          debugLastDriverStatus = status;
+          debugDriverStatusValid = true;
+        }
         debugStatus();
         timeLastDebugStatus = now;
       }

@@ -167,6 +167,33 @@ void StepDirTmc2209::debugStatus() {
   const uint8_t pwmOffsetAuto = driver->getPwmOffsetAuto();
   const uint8_t pwmGradientAuto = driver->getPwmGradientAuto();
 
+  const bool changed = !debugSnapshotValid ||
+                       communicating != debugLastSnapshot.communicating ||
+                       setup != debugLastSnapshot.setup ||
+                       ifcnt != debugLastSnapshot.ifcnt ||
+                       raw != debugLastSnapshot.driverStatus ||
+                       tstep != debugLastSnapshot.tstep ||
+                       sgResult != debugLastSnapshot.sgResult ||
+                       mscnt != debugLastSnapshot.mscnt ||
+                       pwmScaleSum != debugLastSnapshot.pwmScaleSum ||
+                       pwmScaleAuto != debugLastSnapshot.pwmScaleAuto ||
+                       pwmOffsetAuto != debugLastSnapshot.pwmOffsetAuto ||
+                       pwmGradientAuto != debugLastSnapshot.pwmGradientAuto;
+  if (!changed) return;
+
+  debugLastSnapshot.communicating = communicating;
+  debugLastSnapshot.setup = setup;
+  debugLastSnapshot.ifcnt = ifcnt;
+  debugLastSnapshot.driverStatus = raw;
+  debugLastSnapshot.tstep = tstep;
+  debugLastSnapshot.sgResult = sgResult;
+  debugLastSnapshot.mscnt = mscnt;
+  debugLastSnapshot.pwmScaleSum = pwmScaleSum;
+  debugLastSnapshot.pwmScaleAuto = pwmScaleAuto;
+  debugLastSnapshot.pwmOffsetAuto = pwmOffsetAuto;
+  debugLastSnapshot.pwmGradientAuto = pwmGradientAuto;
+  debugSnapshotValid = true;
+
   char s[256];
   snprintf(s, sizeof(s),
            "Axis%u TMC2209 UART comm=%u setup=%u IFCNT=%u DRV_STATUS=0x%08lX TSTEP=%lu SG=%u MSCNT=%u",

@@ -134,6 +134,8 @@ class StepDirDriver {
     unsigned long timeLastStatusUpdate = 0;
     #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF
       unsigned long timeLastDebugStatus = 0;
+      bool debugDriverStatusValid = false;
+      DriverStatus debugLastDriverStatus = {false, {false, false}, {false, false}, false, false, false, false};
     #endif
 
     const StepDirDriverPins *Pins;

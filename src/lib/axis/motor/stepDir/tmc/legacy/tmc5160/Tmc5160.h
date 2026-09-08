@@ -43,6 +43,10 @@ class StepDirTmc5160 : public TmcStepDirDriverNSG {
     #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_SPI) && DEBUG_SPI == ON
       // output complete SPI/register status for the selected debug axis
       void debugStatus() override;
+      bool debugSnapshotValid = false;
+      uint8_t debugLastStatusByte = 0;
+      uint32_t debugLastDriverStatus = 0;
+      uint32_t debugLastChopconf = 0;
     #endif
 
     TmcSPI driver;

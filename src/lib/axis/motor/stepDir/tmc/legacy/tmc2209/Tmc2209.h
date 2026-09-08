@@ -67,6 +67,22 @@ class StepDirTmc2209 : public TmcStepDirDriverNSG {
     #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_UART) && DEBUG_UART == ON
       // output complete UART/register status for the selected debug axis
       void debugStatus() override;
+
+      struct DebugSnapshot {
+        bool communicating;
+        bool setup;
+        uint8_t ifcnt;
+        uint32_t driverStatus;
+        uint32_t tstep;
+        uint16_t sgResult;
+        uint16_t mscnt;
+        uint8_t pwmScaleSum;
+        int16_t pwmScaleAuto;
+        uint8_t pwmOffsetAuto;
+        uint8_t pwmGradientAuto;
+      };
+      bool debugSnapshotValid = false;
+      DebugSnapshot debugLastSnapshot = {};
     #endif
 
     // TMC2209/TMC5160 specific

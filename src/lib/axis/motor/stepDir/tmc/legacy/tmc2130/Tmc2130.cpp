@@ -77,11 +77,23 @@ void StepDirTmc2130::readStatus() {
 #if DEBUG != OFF && defined(DEBUG_AXIS) && DEBUG_AXIS != OFF && defined(DEBUG_SPI) && DEBUG_SPI == ON
 void StepDirTmc2130::debugStatus() {
   const uint32_t chopconf = driver.read_CHOPCONF();
+  const uint8_t statusByte = driver.get_STATUS_byte();
+  const uint32_t driverStatus = driver.get_DRVSTATUS_raw();
+  if (debugSnapshotValid &&
+      statusByte == debugLastStatusByte &&
+      driverStatus == debugLastDriverStatus &&
+      chopconf == debugLastChopconf) return;
+
+  debugLastStatusByte = statusByte;
+  debugLastDriverStatus = driverStatus;
+  debugLastChopconf = chopconf;
+  debugSnapshotValid = true;
+
   char s[256];
   snprintf(s, sizeof(s),
            "Axis%u TMC2130 SPI status=0x%02X DRV_STATUS=0x%08lX CHOPCONF=0x%08lX stst=%u ola=%u olb=%u s2ga=%u s2gb=%u otpw=%u ot=%u stall=%u cs=%u fs=%u sg=%u",
-           (unsigned int)axisNumber, (unsigned int)driver.get_STATUS_byte(),
-           (unsigned long)driver.get_DRVSTATUS_raw(), (unsigned long)chopconf,
+           (unsigned int)axisNumber, (unsigned int)statusByte,
+           (unsigned long)driverStatus, (unsigned long)chopconf,
            (unsigned int)driver.get_DRVSTATUS_stst(), (unsigned int)driver.get_DRVSTATUS_olA(),
            (unsigned int)driver.get_DRVSTATUS_olB(), (unsigned int)driver.get_DRVSTATUS_s2gA(),
            (unsigned int)driver.get_DRVSTATUS_s2gB(), (unsigned int)driver.get_DRVSTATUS_otpw(),
