@@ -973,13 +973,12 @@ private:
         if (echo_count == 0) Serial.println("(none)"); else Serial.println("");
       #endif
 
-      // length 0 return is assumed to be due to HardwareSerial not being full duplex?
+      // hardware serial may not echo writes even though driver replies can still be received
       if (echo_count == 0 && datagram_size == WRITE_READ_REPLY_DATAGRAM_SIZE) {
         #if TMC2209_DEBUG >= 1
           Serial.println("Write without echo detected, switching to no echo mode");
         #endif
         no_echo = true;
-        tx_only_ = true;
         return;
       } else
 
