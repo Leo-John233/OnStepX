@@ -87,3 +87,20 @@ int main(){
  fresh();startupAuthority.trust=true;startupAuthority.locked=false;assert(home.request()==CE_SLEW_ERR_IN_PARK);
 }
 ''')
+
+    command = method('src/telescope/mount/home/Home.command.cpp', 'bool Home::command(')
+    start = command.index('*commandError = request();')
+    end = command.index('*numericReply = false;', start) + len('*numericReply = false;')
+    entry = command[start:end].replace('= request();', '= home.request();')
+    run(cxx, 'home_command_stop', PREFIX + bodies + '\nvoid commandHome(int *commandError, bool *numericReply){\n' + entry + r'''
+}
+int main(){
+ int error;bool numeric=true;
+ goTo.state=GS_GOTO;commandHome(&error,&numeric);
+ assert(error==CE_SLEW_IN_MOTION&&goTo.state==GS_NONE&&guide.starts==0&&!numeric);
+ guide.state=2;commandHome(&error,&numeric);
+ assert(error==CE_SLEW_IN_MOTION&&guide.state==GU_NONE&&guide.starts==0);
+ commandHome(&error,&numeric);assert(error==CE_NONE&&guide.starts==1&&home.state==HS_HOMING);
+ commandHome(&error,&numeric);assert(error==CE_SLEW_IN_MOTION&&!startupAuthority.trusted());
+}
+''')

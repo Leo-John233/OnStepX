@@ -8,6 +8,8 @@
 #include "../../../lib/nv/Nv.h"
 
 #include "../limits/Limits.h"
+#include "../goto/Goto.h"
+#include "../guide/Guide.h"
 #include "../park/Park.h"
 #include "../site/Site.h"
 #include "../startupAuthority/StartupAuthority.h"
@@ -45,6 +47,11 @@ bool Home::command(char *reply, char *command, char *parameter, bool *suppressFr
     //            Returns: Nothing
     if (command[1] == 'C' && parameter[0] == 0) {
       *commandError = request();
+      // 运动中收到回零命令时先停止 再次发送才开始回零
+      if (*commandError == CE_SLEW_IN_MOTION) {
+        goTo.abort();
+        guide.stop();
+      }
       *numericReply = false;
     } else
 
