@@ -373,6 +373,7 @@ CommandError Axis::autoGoto(float frequency) {
   VF("MSG:"); V(axisPrefix);
   VF("autoGoto start ");
 
+  gotoAborted = false;
   motor->markOriginCoordinateSteps();
   motor->setSynchronized(false);
   motor->setSlewing(true);
@@ -483,6 +484,7 @@ void Axis::autoSlewStop() {
 }
 
 void Axis::autoSlewAbort() {
+  if (autoRate == AR_RATE_BY_DISTANCE) gotoAborted = true;
   if (homingStage != HOME_NONE) homeSuccessful = false;
   if (autoRate <= AR_RATE_BY_TIME_ABORT) return;
 

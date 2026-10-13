@@ -441,11 +441,8 @@ void Mount::poll() {
   // stop any movement then disable on motor hardware fault
   if (mount.motorFault()) {
     startupAuthority.requireHome();
-    if (startupAuthority.trusted()) {
-      startupAuthority.setTrusted(false);
-      DLF("WRN: Mount, startup authority trust cleared due to motor/encoder fault");
-    }
-    if (goTo.state > GS_NONE) goTo.abort(); else
+    home.abort();
+    if (goTo.state > GS_NONE) goTo.abort(true); else
     if (guide.state > GU_NONE) guide.abort(); else
     if (axis1.isEnabled() || axis2.isEnabled()) enable(false);
   }

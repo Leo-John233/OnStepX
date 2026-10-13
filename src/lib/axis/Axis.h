@@ -359,6 +359,7 @@ public:
   bool isHoming() { return homingStage != HOME_NONE; }
   // 仅完整经过传感器精找才算成功
   bool homeSucceeded() const { return homeSuccessful; }
+  bool gotoFailed() const { return gotoAborted; }
 
   // 指定回零慢速 零值沿用默认降速
   void setHomeRefineRate(float rate) { homeRefineRate = rate; }
@@ -541,6 +542,7 @@ private:
   bool heldMinLimit = false;
   bool heldMaxLimit = false;
   bool homeSuccessful = false;
+  bool gotoAborted = false;
   float homeRefineRate = 0.0F;
 
   const AxisPins *pins;

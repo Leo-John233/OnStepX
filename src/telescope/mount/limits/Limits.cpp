@@ -287,7 +287,7 @@ uint8_t Limits::errorCode() {
 void Limits::stop() {
   home.abort();
   #if GOTO_FEATURE == ON
-    goTo.abort();
+    goTo.abort(true);
   #endif
   guide.stopAxis1(GA_BREAK, true);
   guide.stopAxis2(GA_BREAK, true);
@@ -296,7 +296,7 @@ void Limits::stop() {
 
 void Limits::stopAxis1(GuideAction stopDirection) {
   #if GOTO_FEATURE == ON
-    goTo.abort();
+    goTo.abort(true);
   #endif
   guide.stopAxis1(stopDirection, true);
   if (stopDirection == GA_FORWARD || !transform.isEquatorial()) mount.tracking(false);
@@ -304,7 +304,7 @@ void Limits::stopAxis1(GuideAction stopDirection) {
 
 void Limits::stopAxis2(GuideAction stopDirection) {
   #if GOTO_FEATURE == ON
-    goTo.abort();
+    goTo.abort(true);
   #endif
   guide.stopAxis2(stopDirection, true);
   if (!transform.isEquatorial()) mount.tracking(false);

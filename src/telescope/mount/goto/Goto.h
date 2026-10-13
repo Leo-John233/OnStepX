@@ -66,7 +66,7 @@ class Goto {
     CommandError setTarget(Coordinate *coords, PierSideSelect pierSideSelect, bool isGoto = true);
 
     // abort any presently active goto
-    void abort();
+    void abort(bool safety = false);
 
     // general status checks ahead of sync or goto
     CommandError validate();
@@ -121,6 +121,9 @@ class Goto {
   private:
 
     #if GOTO_FEATURE == ON
+    // 统一处理完成与中断 不在失败后新增跟踪
+    void finish();
+
     // set any additional destinations required for a goto
     void waypoint(Coordinate *current);
 
@@ -147,6 +150,10 @@ class Goto {
     Coordinate target = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, PIER_SIDE_NONE};
     // last align (goto) target Mount coordinate (eq or hor)
     Coordinate lastAlignTarget = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, PIER_SIDE_NONE};
+    bool trackingBeforeGoto = false;
+    bool trackingOnSuccess = false;
+    bool safetyAborted = false;
+    bool ordinaryGoto = false;
     GotoState  stateAbort           = GS_NONE;
     GotoState  stateLast            = GS_NONE;
     uint8_t    taskHandle           = 0;

@@ -118,10 +118,10 @@ CommandError Goto::request(Coordinate coords, PierSideSelect pierSideSelect, boo
 
   limits.enabled(!recoveryHome);
   mount.syncFromOnStepToEncoders = false;
-  if (firstGoto) {
-    mount.tracking(true);
-    firstGoto = false;
-  }
+  trackingBeforeGoto = mount.isTracking();
+  ordinaryGoto = home.state != HS_HOMING && park.state != PS_PARKING;
+  trackingOnSuccess = ordinaryGoto && firstGoto;
+  safetyAborted = false;
   guide.backlashEnableControl(true);
 
   // allow slewing near target for Eq modes but disable for alt/az, parking, homing if encoders are not present
@@ -162,7 +162,7 @@ CommandError Goto::request(Coordinate coords, PierSideSelect pierSideSelect, boo
       VLF("MSG: Goto, limit recovery disabling limits for 1s");
       limits.limitsDisablePeriod(1.0F);
       #if LIMIT_RECOVERY_WITH_TRACKING == ON
-        if (home.state != HS_HOMING && park.state != PS_PARKING) mount.tracking(true);
+        if (ordinaryGoto) trackingOnSuccess = true;
       #endif
     }
   #endif
@@ -177,6 +177,8 @@ CommandError Goto::request(Coordinate coords, PierSideSelect pierSideSelect, boo
     e = startAutoSlew();
     if (e != CE_NONE) {
       VF("MSG: Mount, goto failed with error "); VL(e);
+      abort(true);
+      tasks.setPeriodMicros(taskHandle, FRACTIONAL_SEC_US);
       return e;
     }
 
@@ -185,7 +187,13 @@ CommandError Goto::request(Coordinate coords, PierSideSelect pierSideSelect, boo
 
     mountStatus.soundAlert();
 
-  } else { DLF("WRN: Mount, start goto monitor task... FAILED!"); }
+  } else {
+    DLF("WRN: Mount, start goto monitor task... FAILED!");
+    state = GS_NONE;
+    stage = GG_NONE;
+    trackingOnSuccess = false;
+    return CE_SLEW_ERR_UNSPECIFIED;
+  }
 
   return CE_NONE;
 }
@@ -378,8 +386,16 @@ CommandError Goto::setTarget(Coordinate *coords, PierSideSelect pierSideSelect, 
 }
 
 // stop any presently active goto
-void Goto::abort() {
-  if (state == GS_GOTO && stage > GG_READY_ABORT) stage = GG_READY_ABORT;
+void Goto::abort(bool safety) {
+  if (state != GS_GOTO) return;
+  safetyAborted |= safety;
+  if (safetyAborted) mount.tracking(false);
+  trackingOnSuccess = false;
+  stage = GG_ABORT;
+  meridianFlipHome.paused = false;
+  meridianFlipHome.resume = false;
+  axis1.autoSlewAbort();
+  axis2.autoSlewAbort();
 }
 
 // general status checks ahead of sync or goto
@@ -478,43 +494,50 @@ void Goto::waypoint(Coordinate *current) {
   }
 }
 
+// 回调完成后再决定跟踪 避免停放中断回调恢复安全停机
+void Goto::finish() {
+  const bool success = stage == GG_DESTINATION && !safetyAborted;
+  state = GS_NONE;
+  axis1.setFrequencyScale(1.0F);
+  axis2.setFrequencyScale(1.0F);
+  tasks.setDurationComplete(taskHandle);
+  taskHandle = 0;
+  if (park.state == PS_PARKING) {
+    if (success) park.requestDone(); else park.requestAborted();
+  }
+  if (home.state == HS_HOMING) {
+    if (success) home.requestDone(); else home.requestAborted();
+  }
+  if (ordinaryGoto) {
+    mount.tracking(!safetyAborted && (trackingBeforeGoto || (success && trackingOnSuccess)));
+    if (success) firstGoto = false;
+  }
+  if (safetyAborted) mount.tracking(false);
+  trackingOnSuccess = false;
+  stage = GG_NONE;
+  mount.update();
+  mountStatus.soundAlert();
+}
+
 // monitor goto
 void Goto::poll() {
-  // abort if either axis encounters a limit
-  if (stage != GG_ABORT &&
-      (stage == GG_READY_ABORT || axis1.motionError(DIR_BOTH) || axis2.motionError(DIR_BOTH))) {
-    VLF("MSG: Mount, goto abort requested");
-    stage = GG_ABORT;
-    meridianFlipHome.paused = false;
-    meridianFlipHome.resume = false;
-    axis1.autoSlewAbort();
-    axis2.autoSlewAbort();
-  }
+  // 物理限位 故障和轴层中断均按失败结束
+  if (mount.motorFault() || axis1.motionError(DIR_BOTH) || axis2.motionError(DIR_BOTH)) abort(true);
+  if (stage != GG_ABORT && (axis1.gotoFailed() || axis2.gotoFailed())) abort(true);
+  if (stage == GG_READY_ABORT) abort();
 
   const unsigned long now = millis();
-
-  // abort any goto that might hang!
-  if (axis1.isSlewing()) {
-    if (!axis1.nearTarget()) nearTargetTimeoutAxis1 = now;
-    if (now - nearTargetTimeoutAxis1 > 15000U) {
-      DLF("WRN: Mount, goto axis1 timed out aborting slew!");
-      axis1.autoSlewAbort();
-    }
-  }
-  if (axis2.isSlewing()) {
-    if (!axis2.nearTarget()) nearTargetTimeoutAxis2 = now;
-    if (now - nearTargetTimeoutAxis2 > 15000U) {
-      DLF("WRN: Mount, goto axis2 timed out aborting slew!");
-      axis2.autoSlewAbort();
-    }
-  }
+  if (axis1.isSlewing() && !axis1.nearTarget()) nearTargetTimeoutAxis1 = now;
+  if (axis2.isSlewing() && !axis2.nearTarget()) nearTargetTimeoutAxis2 = now;
+  if ((axis1.isSlewing() && now - nearTargetTimeoutAxis1 > 15000U) ||
+      (axis2.isSlewing() && now - nearTargetTimeoutAxis2 > 15000U)) abort(true);
 
   if (!mount.isSlewing()) {
     if (stage == GG_WAYPOINT_AVOID) {
       VLF("MSG: Mount, goto waypoint reached");
       stage = GG_WAYPOINT_HOME;
       destination = home.getPosition(CR_MOUNT);
-      startAutoSlew();
+      if (startAutoSlew() != CE_NONE) abort(true);
     } else
 
     if (stage == GG_WAYPOINT_HOME) {
@@ -525,7 +548,7 @@ void Goto::poll() {
       VLF("MSG: Mount, goto home reached");
       stage = GG_NEAR_DESTINATION_START;
       destination = target;
-      startAutoSlew();
+      if (startAutoSlew() != CE_NONE) abort(true);
     } else
 
     if (stage == GG_NEAR_DESTINATION_START) {
@@ -554,7 +577,7 @@ void Goto::poll() {
           slewDestinationDistHA = 0.0;
           slewDestinationDistDec = 0.0;
         }
-        startAutoSlew();
+        if (startAutoSlew() != CE_NONE) abort(true);
       } else {
         stage = GG_DESTINATION;
         VLF("MSG: Mount, goto near destination skipped");
@@ -562,33 +585,7 @@ void Goto::poll() {
     } else
 
     if (stage == GG_DESTINATION || stage == GG_ABORT) {
-      VLF("MSG: Mount, goto destination reached");
-      state = GS_NONE;
-      mount.update();
-
-      // back to normal motor frequencies
-      axis1.setFrequencyScale(1.0F);
-      axis2.setFrequencyScale(1.0F);
-
-      // kill this monitor
-      tasks.setDurationComplete(taskHandle);
-      taskHandle = 0;
-      VLF("MSG: Mount, goto monitor task terminated");
-
-      // check if parking and mark as finished or unparked as needed
-      if (park.state == PS_PARKING) {
-        if (stage == GG_ABORT) park.requestAborted(); else park.requestDone();
-      }
-
-      // check if homing
-      if (home.state == HS_HOMING) {
-        if (stage == GG_ABORT) home.requestAborted(); else home.requestDone();
-      }
-
-      // reset goto stage
-      stage = GG_NONE;
-
-      mountStatus.soundAlert();
+      finish();
 
       return;
     }
@@ -641,7 +638,7 @@ void Goto::poll() {
   // but allow timeout to stop tracking to guarantee synchronization
   if (AXIS1_TARGET_TOLERANCE != 0.0F || AXIS2_TARGET_TOLERANCE != 0.0F || !axis1.nearTarget() || !axis2.nearTarget()) nearTargetTimeout = millis();
 
-  if (mount.isTracking()) {
+  if (mount.isTracking() || trackingOnSuccess) {
     target.r += siderealToRad(mount.trackingRateOffsetRA)/FRACTIONAL_SEC;
     target.d += siderealToRad(mount.trackingRateOffsetDec)/FRACTIONAL_SEC;
     transform.rightAscensionToHourAngle(&target, false);

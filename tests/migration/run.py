@@ -47,7 +47,7 @@ struct Axis {
   bool atTarget() { return target; }
   void autoSlewAbort() { target = false; }
 } axis1, axis2;
-struct { int state = 0; void abort() {} } guide, goTo;
+struct { int state = 0; void abort(bool = false) {} } guide, goTo;
 struct {
   bool fault = false, syncFromOnStepToEncoders = false;
   bool motorFault() { return fault; }
@@ -211,6 +211,37 @@ int main() {
 }
 ''')
 
+
+def goto_outcomes(cxx):
+    path = 'src/telescope/mount/goto/Goto.cpp'
+    methods = '\n'.join(method(path, sig) for sig in ['void Goto::abort(', 'void Goto::finish()'])
+    run(cxx, 'goto_outcomes', '''
+#include <cassert>
+enum {GS_NONE, GS_GOTO, GG_NONE=0, GG_ABORT, GG_READY_ABORT, GG_DESTINATION=8, PS_PARKING=1, HS_HOMING=1};
+struct { bool on=false; void tracking(bool v) { on=v; } void update() {} } mount;
+struct { void setDurationComplete(int) {} } tasks;
+struct { void soundAlert() {} } mountStatus;
+struct Axis { int stops=0; void autoSlewAbort() {++stops;} void setFrequencyScale(float) {} } axis1,axis2;
+struct Park { int state=0,done=0,failed=0; void requestDone(){++done;state=0;} void requestAborted(){++failed;state=0;mount.tracking(true);} } park;
+struct Home { int state=0,done=0,failed=0; void requestDone(){++done;state=0;} void requestAborted(){++failed;state=0;mount.tracking(false);} } home;
+struct Goto {
+ int state=GS_GOTO,stage=GG_DESTINATION,taskHandle=1;
+ bool safetyAborted=false,trackingOnSuccess=true,trackingBeforeGoto=false,ordinaryGoto=true,firstGoto=true;
+ struct { bool paused=false,resume=false; } meridianFlipHome;
+ void abort(bool safety=false);void finish();
+};
+''' + methods + '''
+int main() {
+ Goto g; g.finish(); assert(mount.on && !g.firstGoto && g.state==GS_NONE);
+ g=Goto();mount.on=false;g.abort();g.finish();assert(!mount.on && g.firstGoto);
+ g=Goto();g.trackingBeforeGoto=true;g.abort();g.finish();assert(mount.on);
+ g=Goto();g.trackingBeforeGoto=true;g.abort(true);g.abort();g.finish();assert(!mount.on);
+ g=Goto();g.ordinaryGoto=false;park.state=PS_PARKING;g.abort(true);g.finish();assert(!mount.on && park.failed==1 && park.done==0);
+ g=Goto();g.ordinaryGoto=false;home.state=HS_HOMING;g.abort(true);g.finish();assert(home.failed==1 && home.done==0);
+ g=Goto();g.ordinaryGoto=false;home.state=HS_HOMING;g.finish();assert(home.done==1 && !mount.on);
+}
+''')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cxx', default='g++')
@@ -218,5 +249,6 @@ if __name__ == '__main__':
     authority(args.cxx)
     rates(args.cxx)
     physical_limits(args.cxx)
+    goto_outcomes(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)

@@ -172,7 +172,7 @@ void Home::abort() {
   if (state == HS_NONE) return;
   abortPending = true;
   startupAuthority.requireHome();
-  goTo.abort();
+  goTo.abort(true);
   guide.abort();
   axis1.autoSlewAbort();
   axis2.autoSlewAbort();
