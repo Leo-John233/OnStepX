@@ -154,6 +154,10 @@
 
 #define MOUNT_ENABLE_IN_STANDBY           OFF           // [少改] ON 在待机状态下启用架台电机驱动器
 
+// --- 回零确认 ---
+#define HOME_REQUIRED_ON_BOOT             ON            // 开机先回零或确认机械原点
+#define HOME_REQUIRED_AFTER_LIMIT         ON            // 物理限位后重新回零
+
 // --- 时间和位置 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#TLS
 #define TIME_LOCATION_SOURCE              OFF           // [可选] DS3231 I2C, SD3031 I2C, TEENSY T3.2 等, GPS 或 NTP 源

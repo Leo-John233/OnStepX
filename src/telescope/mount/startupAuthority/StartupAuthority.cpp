@@ -16,6 +16,7 @@ void StartupAuthority::init() {
 }
 
 void StartupAuthority::begin() {
+  homeRequired = false;
   trustedValue = false;
   trustEstablishedValue = false;
   commissioningAllowed = false;
@@ -37,7 +38,23 @@ void StartupAuthority::setTrusted(bool state) {
 
   // If we have a trusted coordinate basis and date/time is ready, limits can
   // be enforced immediately without waiting for a later goto/reset/unpark path.
-  if (trustedValue && site.isDateTimeReady()) limits.enabled(true);
+  if (trusted() && site.isDateTimeReady()) limits.enabled(true);
+}
+
+// 停止跟踪并锁定自动运动 手动退出仍由限位检查约束
+void StartupAuthority::requireHome(bool coordinatesKnown) {
+  if (!coordinatesKnown) trustedValue = false;
+  homeRequired = true;
+  limits.enabled(false);
+  mount.tracking(false);
+}
+
+// 只有确认原点后才解除恢复锁 NV 故障仍可拒绝授权
+void StartupAuthority::completeHome() {
+  homeRequired = false;
+  trustedValue = false;
+  setTrusted(true);
+  if (!trustedValue) homeRequired = true;
 }
 
 bool StartupAuthority::required() const {
@@ -49,6 +66,7 @@ bool StartupAuthority::required() const {
 }
 
 CommandError StartupAuthority::validateManualMotion() const {
+  if (homeRequired) return CE_NONE;
   if (!required()) return CE_NONE;
 
   // Commissioning mode: on first boot/fresh NV there may be no trusted

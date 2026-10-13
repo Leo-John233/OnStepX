@@ -645,6 +645,13 @@
 #ifndef NV_INIT_ERROR_REVOKES_AUTHORITY
 #define NV_INIT_ERROR_REVOKES_AUTHORITY ON                        // ON revokes startup authority trust if NV reports an init/read fault
 #endif
+#ifndef HOME_REQUIRED_ON_BOOT
+#define HOME_REQUIRED_ON_BOOT        OFF                         // 开机要求确认原点
+#endif
+#ifndef HOME_REQUIRED_AFTER_LIMIT
+#define HOME_REQUIRED_AFTER_LIMIT    OFF                         // 物理限位后要求重新回零
+#endif
+
 #ifndef MOUNT_ENABLE_IN_STANDBY
 #define MOUNT_ENABLE_IN_STANDBY       OFF                         // ON Enables mount motor drivers in standby
 #endif

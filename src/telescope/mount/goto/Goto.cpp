@@ -78,7 +78,9 @@ CommandError Goto::request() {
 
 // goto equatorial position (Native or Mount coordinate system)
 CommandError Goto::request(Coordinate coords, PierSideSelect pierSideSelect, bool native) {
-  if (!startupAuthority.trusted()) {
+  // 无传感器时只放行恢复性回原点
+  const bool recoveryHome = home.state == HS_HOMING && !home.hasSense && startupAuthority.canReturnHome();
+  if (!startupAuthority.trusted() && !recoveryHome) {
     DLF("WRN: Mount, goto rejected because startup authority is not trusted");
     return CE_SLEW_ERR_UNSPECIFIED;
   }
@@ -114,7 +116,7 @@ CommandError Goto::request(Coordinate coords, PierSideSelect pierSideSelect, boo
     #endif
   #endif
 
-  limits.enabled(true);
+  limits.enabled(!recoveryHome);
   mount.syncFromOnStepToEncoders = false;
   if (firstGoto) {
     mount.tracking(true);

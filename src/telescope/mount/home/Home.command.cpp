@@ -81,8 +81,9 @@ bool Home::command(char *reply, char *command, char *parameter, bool *suppressFr
     //            Point to the celestial pole.  GEM w/counterweights pointing downwards (CWD position).  Equatorial fork mounts at HA = 0.
     //            Returns: Nothing
     if (command[1] == 'F' && parameter[0] == 0) {
-      *commandError = reset(true);
-      park.reset();
+      // 用户确认机械原点后重建坐标
+      *commandError = reset(true, true);
+      if (*commandError == CE_NONE) park.reset();
       limits.enabled(site.isDateTimeReady() && startupAuthority.trusted());
       *numericReply = false;
     } else return false;

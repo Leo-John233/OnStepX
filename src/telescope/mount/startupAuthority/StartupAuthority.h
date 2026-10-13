@@ -13,7 +13,12 @@ class StartupAuthority {
     void init();
     void begin();
 
-    inline bool trusted() const { return trustedValue; }
+    inline bool trusted() const { return trustedValue && !homeRequired; }
+    // 恢复锁期间仅允许已知坐标返回原点
+    inline bool needsHome() const { return homeRequired; }
+    inline bool canReturnHome() const { return trustedValue && homeRequired; }
+    void requireHome(bool coordinatesKnown = false);
+    void completeHome();
     bool required() const;
     CommandError validateManualMotion() const;
     void setTrusted(bool state);
@@ -29,6 +34,7 @@ class StartupAuthority {
     bool commissioningAllowed = false;
     bool trustEstablishedValue = false;
     bool trustedValue = false;
+    bool homeRequired = false;
 };
 
 extern StartupAuthority startupAuthority;

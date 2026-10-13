@@ -379,6 +379,10 @@
   #error "Configuration (Config.h): Setting MOUNT_ENABLE_IN_STANDBY unknown, use ON or OFF"
 #endif
 
+#if (HOME_REQUIRED_ON_BOOT != ON && HOME_REQUIRED_ON_BOOT != OFF) || (HOME_REQUIRED_AFTER_LIMIT != ON && HOME_REQUIRED_AFTER_LIMIT != OFF)
+  #error "HOME_REQUIRED_ON_BOOT and HOME_REQUIRED_AFTER_LIMIT must be ON or OFF"
+#endif
+
 #if ALIGN_MAX_STARS != AUTO && (ALIGN_MAX_STARS < 1 && ALIGN_MAX_STARS > 9)
   #error "Configuration (Config.h): Setting ALIGN_MAX_STARS unknown, use AUTO or a value from 1 to 9."
 #endif

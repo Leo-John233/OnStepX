@@ -1,5 +1,17 @@
 # Startup Authority And Coordinate Trust Notes
 
+## 本地迁移补充
+
+- HOME_REQUIRED_ON_BOOT 要求开机后确认原点
+- HOME_REQUIRED_AFTER_LIMIT 由物理限位模块触发恢复锁
+- 恢复锁期间禁止普通 GOTO Sync 和开启跟踪
+- 无传感器且坐标仍可信时仅允许返回原点
+- 位置丢失后须传感器回零或用户确认原点
+- 普通授权更新不能清除恢复锁
+- hF 明确确认原点 NV 故障仍会拒绝位置授权
+- 手动运动保留原有时间限制和方向限位
+- 下文原有策略均受恢复锁约束
+
 ## Purpose
 
 These notes describe how startup authority and coordinate trust currently work

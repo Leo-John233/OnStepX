@@ -1,5 +1,11 @@
 # OnStepX Command Reference
 
+## 本地迁移行为补充
+
+- :hF# 表示用户已确认机械原点 成功后可清除回零恢复锁
+- :Te# 在回零恢复锁期间返回待机错误
+- 状态中的 H 仅在位置可信 回零完成且双轴停稳时返回
+
 This reference is derived from the current command handlers in the source tree, primarily the `*.command.cpp` files plus the shared command processor in `src/libApp/commands/ProcessCmds.cpp`.
 
 Scope notes:

@@ -217,6 +217,11 @@ void Mount::begin() {
     #endif
   #endif
 
+  // 回零确认独立于默认启动授权策略
+  #if HOME_REQUIRED_ON_BOOT == ON
+    startupAuthority.requireHome(!home.hasSense && startupAuthority.trusted());
+  #endif
+
   VF("MSG: Mount, start tracking monitor task (rate 1000ms priority 6)... ");
   if (tasks.add(1000, 0, true, 6, mountWrapper, "MtTrack")) { VLF("success"); } else { VLF("FAILED!"); }
 
@@ -341,6 +346,7 @@ void Mount::autostartPostponed() {
 
 // enables or disables tracking, enabling tracking powers on the motors if necessary
 void Mount::tracking(bool state) {
+  if (state && startupAuthority.needsHome()) return;
   if (state == true) {
     enable(state);
     if (isEnabled()) {
@@ -429,6 +435,7 @@ void Mount::poll() {
 
   // stop any movement then disable on motor hardware fault
   if (mount.motorFault()) {
+    startupAuthority.requireHome();
     if (startupAuthority.trusted()) {
       startupAuthority.setTrusted(false);
       DLF("WRN: Mount, startup authority trust cleared due to motor/encoder fault");

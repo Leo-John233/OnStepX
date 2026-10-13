@@ -54,7 +54,7 @@ CommandError Home::request() {
     #endif
 
     failed = false;
-    if (!startupAuthority.trusted() && !hasSense) {
+    if (!startupAuthority.trusted() && !hasSense && !startupAuthority.canReturnHome()) {
       DLF("WRN: Mount, home rejected because startup authority is not trusted and no home switches are present");
       return CE_SLEW_ERR_UNSPECIFIED;
     }
@@ -235,7 +235,8 @@ void Home::guideDone(bool success) {
 void Home::requestDone() {
   state = HS_NONE;
   failed = false;
-  reset(false);
+  CommandError e = reset(false, true);
+  if (e != CE_NONE) { failed = true; startupAuthority.requireHome(); }
 }
 
 // reset mount at home
@@ -333,7 +334,7 @@ CommandError Home::reset(bool fullReset, bool authoritative) {
     VLF(")");
   }
 
-  if (authoritative) startupAuthority.setTrusted(true);
+  if (authoritative) startupAuthority.completeHome();
 
   return CE_NONE;
 }

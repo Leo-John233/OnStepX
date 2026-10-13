@@ -21,6 +21,8 @@
 #include "../startupAuthority/StartupAuthority.h"
 
 bool Status::command(char *reply, char *command, char *parameter, bool *suppressFrame, bool *numericReply, CommandError *commandError) {
+  // 回零未完成或位置不可信时不报告已在原点
+  const bool verifiedHome = startupAuthority.trusted() && home.state == HS_NONE && !home.failed && !mount.isSlewing() && mount.isHome();
   UNUSED(suppressFrame);
 
   if (command[0] == 'G') {
@@ -47,7 +49,7 @@ bool Status::command(char *reply, char *command, char *parameter, bool *suppress
       if (park.state == PS_PARKED)             reply[i++]='P'; else                // [P]arked
       if (park.state == PS_PARK_FAILED)        reply[i++]='F';                     // Park [F]ailed
       if (mount.syncFromOnStepToEncoders)      reply[i++]='e';                     // Sync to [e]ncoders only
-      if (mount.isHome())                      reply[i++]='H';                     // At [H]ome
+      if (verifiedHome)                      reply[i++]='H';                     // At [H]ome
       if (home.state == HS_HOMING)             reply[i++]='h';                     // Slewing [h]ome
       if (home.settings.automaticAtBoot)       reply[i++]='B';                     // Auto home at [B]oot
       #if (TIME_LOCATION_PPS_SENSE) != OFF
@@ -124,7 +126,7 @@ bool Status::command(char *reply, char *command, char *parameter, bool *suppress
       if (startupAuthority.trusted())              reply[1]|=0b10010000;           // Startup authority trusted
       if (goTo.getHomeMode() == MFHM_VISIT)        reply[1]|=0b10100000;           // Meridian flip visit home mode
       if (goTo.getHomeMode() == MFHM_PAUSE)        reply[1]|=0b11000000;           // Meridian flip pause at home mode
-      if (mount.isHome())                          reply[2]|=0b10000001;           // At home
+      if (verifiedHome)                          reply[2]|=0b10000001;           // At home
       if (home.state == HS_HOMING)                 reply[2]|=0b10100000;           // Slewing home
       if (home.settings.automaticAtBoot)           reply[2]|=0b11000000;           // Auto home at boot
       if (goTo.isHomePaused())                     reply[2]|=0b10000010;           // Waiting at home
@@ -166,7 +168,7 @@ bool Status::command(char *reply, char *command, char *parameter, bool *suppress
       if (transform.mountType == ALTALT)       reply[i++] = 'L';
       if (mount.isTracking())                  reply[i++] = 'T'; else reply[i++] = 'N';
       if (park.state == PS_PARKED)             reply[i++] = 'P'; else
-      if (mount.isHome())                      reply[i++] = 'H'; else
+      if (verifiedHome)                      reply[i++] = 'H'; else
       if (goTo.alignDone())                    reply[i++] = '1'; else reply[i++] = '0';
       reply[i++] = 0;
       *numericReply = false;

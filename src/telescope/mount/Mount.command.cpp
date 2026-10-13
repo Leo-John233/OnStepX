@@ -430,6 +430,7 @@ bool Mount::command(char *reply, char *command, char *parameter, bool *suppressF
     if (command[1] == '-') { site.setSiderealPeriod(site.getSiderealPeriod() + hzToSubMicros(0.02F)); } else
     if (command[1] == 'R') { site.setSiderealPeriod(SIDEREAL_PERIOD); } else
     if (command[1] == 'e') {
+      if (startupAuthority.needsHome()) { *commandError = CE_SLEW_ERR_IN_STANDBY; return true; }
       #if GOTO_FEATURE == ON
         if (park.state != PS_PARKED) {
       #endif
