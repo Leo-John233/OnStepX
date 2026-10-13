@@ -403,5 +403,7 @@ if __name__ == '__main__':
     offset_config(args.cxx)
     from recovery import check
     check(args.cxx)
+    from compatibility import startup
+    startup(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)

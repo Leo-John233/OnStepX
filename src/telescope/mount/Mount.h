@@ -122,6 +122,8 @@ class Mount {
     MountSettings settings = {RC_DEFAULT, { 0, 0 }, MOUNT_SUBTYPE};
 
   private:
+    void finishAutostart();
+    bool autostartComplete = false;
     // alternate tracking rate calculation method
     float ztr(float a);
 

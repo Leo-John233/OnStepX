@@ -285,8 +285,7 @@ void Mount::autostartPostponed() {
   if (!telescope.ready) return;
 
   // stop this task if already completed
-  static bool autoStartDone = false;
-  if (autoStartDone) {
+  if (autostartComplete) {
     tasks.setDurationComplete(tasks.getHandleByName("MtAuto"));
     return;
   }
@@ -296,7 +295,7 @@ void Mount::autostartPostponed() {
   if (!autoTrackDone && TRACK_AUTOSTART == ON && transform.isEquatorial() && park.state != PS_PARKED && !home.settings.automaticAtBoot) {
     VLF("MSG: Mount, autostart tracking");
     tracking(true);
-    autoStartDone = true;
+    finishAutostart();
     return;
   }
 
@@ -305,14 +304,16 @@ void Mount::autostartPostponed() {
 
   // auto unpark
   static bool autoUnparkDone = false;
-  if (!autoUnparkDone && park.state == PS_PARKED) {
+  // 传感器自动回零自行建立坐标 不依赖泊车记录恢复
+  const bool sensorHomeAtBoot = home.settings.automaticAtBoot && home.hasSense;
+  if (!autoUnparkDone && park.state == PS_PARKED && !sensorHomeAtBoot) {
     #if GOTO_FEATURE == ON
       VLF("MSG: Mount, autostart park restore");
       // 开机回零锁期间只恢复坐标 显式 Unpark 才解除恢复锁
       CommandError e = park.restore(TRACK_AUTOSTART == ON && !startupAuthority.needsHome());
       if (e != CE_NONE) {
         DF("WRN: Mount, autostart park restore failed with code "); DL(e);
-        autoStartDone = true;
+        finishAutostart();
         return;
       }
     #endif
@@ -323,10 +324,11 @@ void Mount::autostartPostponed() {
   static bool autoHomeDone = false;
   if (!autoHomeDone && home.settings.automaticAtBoot) {
     VLF("MSG: Mount, autostart home");
+    if (sensorHomeAtBoot && park.state == PS_PARKED) startupAuthority.requireHome();
     CommandError e = home.request();
     if (e != CE_NONE) {
       DF("WRN: Mount, autostart home request failed with code "); DL(e);
-      autoStartDone = true;
+      finishAutostart();
       return;
     }
   }
@@ -336,7 +338,7 @@ void Mount::autostartPostponed() {
   if (home.state == HS_HOMING) return;
   if (home.failed) {
     DLF("WRN: Mount, autostart home failed");
-    autoStartDone = true;
+    finishAutostart();
     return;
   }
 
@@ -347,7 +349,15 @@ void Mount::autostartPostponed() {
   }
   autoTrackDone = true;
 
-  autoStartDone = true;
+  finishAutostart();
+}
+
+// 启动结束后落实电机保持 不改变原生复位和泊车的断电规则
+void Mount::finishAutostart() {
+  autostartComplete = true;
+  #if MOTOR_HOLD_ON_BOOT == ON
+    if (!home.failed && !motorFault() && !initError.nv) enable(true);
+  #endif
 }
 
 // enables or disables tracking, enabling tracking powers on the motors if necessary
