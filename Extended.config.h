@@ -32,3 +32,5 @@
 #define NV_WIPE                           OFF           // [少改] 将默认值重新写入 NV FLASH EEPROM 等
 
 // ----------------------------------------------------------------------------
+
+#define AXIS5_SLEW_RATE_MINIMUM           50            //     50, n. Where n=1..1000 (um/s.) Minimum microns/second. In DC mode, min pwr.  Adjust

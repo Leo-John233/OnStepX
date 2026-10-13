@@ -8,7 +8,7 @@
 // ============================================================================
 // 控制器
 // ============================================================================
-#define HOST_NAME                         "OnStepX"     // [调整] 本设备的主机名 最多 16 个字符
+#define HOST_NAME                         "OnStep"      // [调整] 本设备的主机名 最多 16 个字符
 
 // --- 引脚映射 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Controller#PINMAP
@@ -63,26 +63,26 @@
 
 // 如果已启用轴运行时设置 则会忽略下方配置 可在 SWS 中禁用或清除 NV/EEPROM
 // 运行时设置覆盖范围 开始
-#define AXIS1_STEPS_PER_DEGREE            12800         // [必填] 每度步数
+#define AXIS1_STEPS_PER_DEGREE            14222.222     // [必填] 每度步数
                                                         //        n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
 #define AXIS1_REVERSE                     OFF           // [常用] ON 反转运动方向 也可通过反接电机线修正方向
 #define AXIS1_LIMIT_MIN                   -180          // [调整] 其中 n=-90..-360 单位为度 表示最小赤经时角或方位角
 #define AXIS1_LIMIT_MAX                   180           // [调整] 其中 n=90..360 单位为度 表示最大赤经时角或方位角
 #define AXIS1_LIMIT_SYNC                  OFF           // [可选] 其中 n=0..90 单位为度 仅允许在此正负范围内同步或复位
 
-#define AXIS1_DRIVER_MICROSTEPS           OFF           // [必填] 默认微步模式
-#define AXIS1_DRIVER_MICROSTEPS_GOTO      OFF           // [可选] 覆盖自动寻星微步模式 OFF 使用 _DRIVER_MICROSTEPS
+#define AXIS1_DRIVER_MICROSTEPS           64            // [必填] 默认微步模式
+#define AXIS1_DRIVER_MICROSTEPS_GOTO      32            // [可选] 覆盖自动寻星微步模式 OFF 使用 _DRIVER_MICROSTEPS
 
 // 适用于 TMC2130, TMC5160, TMC2209, TMC2226 步进方向驱动器型号
 #define AXIS1_DRIVER_IHOLD                OFF           // [可选] 单位为 mA 静止电流 OFF 使用 IRUN/2.0
-#define AXIS1_DRIVER_IRUN                 OFF           // [可选] 单位为 mA 默认运行电流 应与步进电机和驱动器等匹配
-#define AXIS1_DRIVER_IGOTO                OFF           // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
+#define AXIS1_DRIVER_IRUN                 1400          // [可选] 单位为 mA 默认运行电流 应与步进电机和驱动器等匹配
+#define AXIS1_DRIVER_IGOTO                1500          // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
 // 运行时设置覆盖范围 结束
 
 #define AXIS1_DRIVER_STATUS               ON            // [可选] ON, HIGH 或 LOW 用于驱动器状态信息和故障检测 默认 OFF
 
-#define AXIS1_DRIVER_DECAY                OFF           // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
-#define AXIS1_DRIVER_DECAY_GOTO           OFF           // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
+#define AXIS1_DRIVER_DECAY                STEALTHCHOP   // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
+#define AXIS1_DRIVER_DECAY_GOTO           SPREADCYCLE   // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
 
 #define AXIS1_POWER_DOWN                  OFF           // [少改] ON 运动停止 30 秒后关闭电源 或最后一次不超过 1 倍速导星 10 分钟后关闭电源
 
@@ -101,30 +101,30 @@
 
 // 如果已启用轴运行时设置 则会忽略下方配置 可在 SWS 中禁用或清除 NV/EEPROM
 // 运行时设置覆盖范围 开始
-#define AXIS2_STEPS_PER_DEGREE            12800         // [必填] 每度步数
+#define AXIS2_STEPS_PER_DEGREE            14222.222     // [必填] 每度步数
                                                         //        n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
-#define AXIS2_REVERSE                     OFF           // [常用] ON 反转运动方向 也可通过反接电机线修正方向
+#define AXIS2_REVERSE                     ON            // [常用] ON 反转运动方向 也可通过反接电机线修正方向
 #define AXIS2_LIMIT_MIN                   -90           // [少改] 其中 n=-90..0 单位为度 表示允许的最小赤纬或高度角
 #define AXIS2_LIMIT_MAX                   90            // [少改] 其中 n=0..90 单位为度 表示允许的最大赤纬或高度角
 #define AXIS2_LIMIT_SYNC                  OFF           // [可选] 其中 n=0..90 单位为度 仅允许在此正负范围内同步或复位
 
-#define AXIS2_DRIVER_MICROSTEPS           OFF           // [必填] 默认微步模式
-#define AXIS2_DRIVER_MICROSTEPS_GOTO      OFF           // [可选] 覆盖自动寻星微步模式 OFF 使用 _DRIVER_MICROSTEPS
+#define AXIS2_DRIVER_MICROSTEPS           64            // [必填] 默认微步模式
+#define AXIS2_DRIVER_MICROSTEPS_GOTO      32            // [可选] 覆盖自动寻星微步模式 OFF 使用 _DRIVER_MICROSTEPS
 
 // 适用于 TMC2130, TMC5160, TMC2209, TMC2226 步进方向驱动器型号
 #define AXIS2_DRIVER_IHOLD                OFF           // [可选] 单位为 mA 静止电流 OFF 使用 IRUN/2.0
-#define AXIS2_DRIVER_IRUN                 OFF           // [可选] 单位为 mA 默认运行电流 应与步进电机和驱动器等匹配
-#define AXIS2_DRIVER_IGOTO                OFF           // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
+#define AXIS2_DRIVER_IRUN                 1200          // [可选] 单位为 mA 默认运行电流 应与步进电机和驱动器等匹配
+#define AXIS2_DRIVER_IGOTO                1300          // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
 // 运行时设置覆盖范围 结束
 
 #define AXIS2_DRIVER_STATUS               ON            // [可选] ON, HIGH 或 LOW 轮询驱动器状态信息和故障检测 默认 OFF
 
-#define AXIS2_DRIVER_DECAY                OFF           // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
-#define AXIS2_DRIVER_DECAY_GOTO           OFF           // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
+#define AXIS2_DRIVER_DECAY                STEALTHCHOP   // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
+#define AXIS2_DRIVER_DECAY_GOTO           SPREADCYCLE   // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
 
 #define AXIS2_POWER_DOWN                  OFF           // [可选] ON 运动停止 30 秒后关闭电源 或最后一次不超过 1 倍速导星 10 分钟后关闭电源
 
-#define AXIS2_SENSE_HOME                  HIGH           // [可选] HIGH 或 LOW 用于启用并指定从上方观察时顺时针方向的原点状态
+#define AXIS2_SENSE_HOME                  HIGH          // [可选] HIGH 或 LOW 用于启用并指定从上方观察时顺时针方向的原点状态
 #define AXIS2_SENSE_LIMIT_INIT            INPUT         // 图纸限位引脚使用外部上拉
 #define AXIS2_SENSE_LIMIT_MIN             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
 #define AXIS2_SENSE_LIMIT_MAX             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
@@ -157,6 +157,8 @@
 #define MOUNT_ENABLE_IN_STANDBY           OFF           // [少改] ON 在待机状态下启用架台电机驱动器
 
 // --- 回零确认 ---
+#define AXIS1_SENSE_HOME_OFFSET           -5400         // 原点传感器偏置 单位角秒
+#define AXIS2_SENSE_HOME_OFFSET           -3600         // 原点传感器偏置 单位角秒
 #define HOME_FAST_RATE                    9             // 回零快速 1 至 9 档
 #define HOME_SLOW_RATE                    7             // 回零慢速 精找再降为六分之一
 #define HOME_OFFSET_RATE                  8             // 回零偏置 1 至 9 档
@@ -166,14 +168,14 @@
 
 // --- 时间和位置 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#TLS
-#define TIME_LOCATION_SOURCE              OFF           // [可选] DS3231 I2C, SD3031 I2C, TEENSY T3.2 等, GPS 或 NTP 源
+#define TIME_LOCATION_SOURCE              DS3231        // [可选] DS3231 I2C, SD3031 I2C, TEENSY T3.2 等, GPS 或 NTP 源
                                                         //        提供日期和时间 可用时还提供 PPS 和经纬度
 #define TIME_LOCATION_PPS_SENSE           OFF           // [可选] HIGH 检测 PPS 每秒脉冲信号上升沿 LOW 检测下降沿
                                                         //        BOTH 同时检测上升沿和下降沿
 
 // --- 状态指示 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#STATUS
-#define STATUS_MOUNT_LED                  OFF           // [可选] ON 按运动速率成比例闪烁 转动时常亮
+#define STATUS_MOUNT_LED                  ON            // [可选] ON 按运动速率成比例闪烁 转动时常亮
 #define STATUS_BUZZER                     OFF           // [可选] ON, n 其中 n=100..6000 为扬声器频率 单位为 Hz ON 用于压电蜂鸣器
 #define STATUS_BUZZER_DEFAULT             OFF           // [可选] ON 启动时启用蜂鸣器声音
 #define STATUS_BUZZER_MEMORY              OFF           // [可选] ON 断电后保留蜂鸣器声音设置
@@ -188,11 +190,11 @@
 #define ST4_HAND_CONTROL                  ON            // [可选] ON 启用手控器特殊功能和 SHC 支持
                                                         //        同时按住 [E]+[W] 超过 2 秒 导星速率 [E]- [W]+ [N] 跟踪开关 [S] 同步
                                                         //        同时按住 [N]+[S] 超过 2 秒 用户目录项 [E]- [W]+ [N] 自动寻星 [S] 声音开关
-#define ST4_HAND_CONTROL_FOCUSER          ON            // [可选] ON 使用上述功能的替代模式 调焦器移动 [E]f1 [W]f2 [N]- [S]+
+#define ST4_HAND_CONTROL_FOCUSER          OFF           // [可选] ON 使用上述功能的替代模式 调焦器移动 [E]f1 [W]f2 [N]- [S]+
 
 // --- 导星行为 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#GUIDING
-#define GUIDE_TIME_LIMIT                  10            // [调整] 时间限制 n=0..120 秒 使用 0 禁用
+#define GUIDE_TIME_LIMIT                  0             // [调整] 时间限制 n=0..120 秒 使用 0 禁用
 #define GUIDE_DISABLE_BACKLASH            OFF           // [可选] 在不超过 1 倍速导星时禁用回差补偿
 
 // --- 限位 ---
@@ -210,7 +212,7 @@
 
 // --- 周期误差修正 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#PEC
-#define PEC_STEPS_PER_WORM_ROTATION       0             // [必填] 蜗杆每转的步数 0 表示禁用 其他值会分配 720 秒缓冲区
+#define PEC_STEPS_PER_WORM_ROTATION       51200         // [必填] 蜗杆每转的步数 0 表示禁用 其他值会分配 720 秒缓冲区
                                                         //        n = (AXIS1_STEPS_PER_DEGREE*360)/reduction_final_stage
 
 #define PEC_SENSE                         OFF           // [可选] HIGH 检测 PEC 信号上升沿 LOW 检测下降沿
@@ -219,7 +221,7 @@
 
 // --- 跟踪行为 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#TRACKING
-#define TRACK_BACKLASH_RATE               20            // [可选] 其中 n=2..50 表示回差补偿期间的恒星时速率倍数
+#define TRACK_BACKLASH_RATE               25            // [可选] 其中 n=2..50 表示回差补偿期间的恒星时速率倍数
                                                         //        过快会导致电机失步或齿轮撞击 过慢会使回差补偿迟缓
 #define TRACK_AUTOSTART                   OFF           // [可选] ON 启动时自动启用跟踪
 #define TRACK_COMPENSATION_DEFAULT        OFF           // [可选] 不补偿 或 REFRACTION, REFRACTION_DUAL, MODEL, MODEL_DUAL
@@ -227,9 +229,9 @@
 
 // --- 转动行为 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#SLEWING
-#define SLEW_RATE_BASE_DESIRED            1.0           // [必填] 期望转动速率 单位为度每秒 运行时可在此速率的
+#define SLEW_RATE_BASE_DESIRED            6.0           // [必填] 期望转动速率 单位为度每秒 运行时可在此速率的
                                                         //        1/2 至 2 倍范围内调整 并应考虑性能要求
-#define SLEW_RATE_MEMORY                  OFF           // [可选] ON 断电后保留速率设置
+#define SLEW_RATE_MEMORY                  ON            // [可选] ON 断电后保留速率设置
 #define SLEW_ACCELERATION_DIST            5.0           // [调整] 单位为度 加速和减速所需的大致距离
 #define SLEW_RAPID_STOP_DIST              2.0           // [调整] 单位为度 中止转动或超过限位时停止所需的大致距离
 #define GOTO_FEATURE                      ON            // [少改] 使用 OFF 禁用架台自动寻星功能
@@ -238,14 +240,14 @@
 
 // --- 基座侧行为 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#PIERSIDE
-#define MFLIP_HOME_DEFAULT                VISIT         // [可选] OFF, VISIT, PAUSE 选择中天翻转时的原点路径点行为
+#define MFLIP_HOME_DEFAULT                OFF           // [可选] OFF, VISIT, PAUSE 选择中天翻转时的原点路径点行为
                                                         //        OFF 直接前往 VISIT 经过原点 PAUSE 在原点等待
 #define MFLIP_HOME_MEMORY                 OFF           // [可选] ON 断电后保留中天翻转原点模式设置
 #define MFLIP_AUTOMATIC_DEFAULT           OFF           // [可选] ON 启动时启用自动中天翻转
 #define MFLIP_AUTOMATIC_MEMORY            OFF           // [可选] ON 断电后保留自动中天翻转设置
 
 #define PIER_SIDE_SYNC_CHANGE_SIDES       OFF           // [可选] ON 允许 GEM 架台在同步时改变基座侧
-#define PIER_SIDE_PREFERRED_DEFAULT       BEST          // [可选] BEST 尽可能保持当前侧 EAST 或 WEST 则尽可能切换到指定侧
+#define PIER_SIDE_PREFERRED_DEFAULT       EAST          // [可选] BEST 尽可能保持当前侧 EAST 或 WEST 则尽可能切换到指定侧
                                                         //        AUTOMATIC 在接近下极子午线时优先西侧 否则优先东侧
 #define PIER_SIDE_PREFERRED_MEMORY        OFF           // [可选] ON 断电后保留首选基座侧设置
 
@@ -274,8 +276,8 @@
 #define AXIS3_STEPS_PER_DEGREE            64.0          // [调整] 旋转器或消旋器的每度步数
                                                         //        高度方位消旋 n = (圆周像素数 * 2)/360 为最小值
 #define AXIS3_REVERSE                     OFF           // [可选] ON 反转运动方向 也可通过反接电机线修正方向
-#define AXIS3_LIMIT_MIN                   0             // [少改] 其中 n=-360..0 单位为度 表示允许的最小旋转器角度
-#define AXIS3_LIMIT_MAX                   360           // [少改] 其中 n=0..360 单位为度 表示允许的最大旋转器角度
+#define AXIS3_LIMIT_MIN                   -180          // [少改] 其中 n=-360..0 单位为度 表示允许的最小旋转器角度
+#define AXIS3_LIMIT_MAX                   180           // [少改] 其中 n=0..360 单位为度 表示允许的最大旋转器角度
 
 #define AXIS3_DRIVER_MICROSTEPS           OFF           // [可选] 默认微步模式
 #define AXIS3_DRIVER_MICROSTEPS_GOTO      OFF           // [可选] 覆盖自动寻星微步模式 OFF 使用 _DRIVER_MICROSTEPS
@@ -309,14 +311,14 @@
 #define AXIS4_DRIVER_MODEL                OFF           // [可选] 填写上方列出的电机驱动器型号以启用调焦器
 #define AXIS4_SLEW_RATE_BASE_DESIRED      500           // [必填] 其中 n=200..5000 单位为 um/s 运行时可在此速率的
                                                         //        1/2 至 2 倍范围内调整 并应考虑性能要求
-#define AXIS4_SLEW_RATE_MINIMUM           20            // [调整] 其中 n=5..200 单位为 um/s 表示最小微米每秒速率
+#define AXIS4_SLEW_RATE_MINIMUM           50            // [调整] 其中 n=5..200 单位为 um/s 表示最小微米每秒速率
 
 // 如果已启用轴运行时设置 则会忽略下方配置 可在 SWS 中禁用或清除 NV/EEPROM
 // 运行时设置覆盖范围 开始
 #define AXIS4_STEPS_PER_MICRON            0.5           // [调整] 每微米步数 可通过测试或其他方法确定
 #define AXIS4_REVERSE                     OFF           // [可选] ON 反转运动方向 也可通过反接电机线修正方向
 #define AXIS4_LIMIT_MIN                   0             // [调整] 其中 n=0..500 单位为毫米 表示允许的最小位置
-#define AXIS4_LIMIT_MAX                   50            // [调整] 其中 n=0..500 单位为毫米 表示允许的最大位置
+#define AXIS4_LIMIT_MAX                   80            // [调整] 其中 n=0..500 单位为毫米 表示允许的最大位置
 
 #define AXIS4_DRIVER_MICROSTEPS           OFF           // [可选] 默认微步模式
 #define AXIS4_DRIVER_MICROSTEPS_GOTO      OFF           // [可选] 覆盖自动寻星微步模式 OFF 使用 _DRIVER_MICROSTEPS
