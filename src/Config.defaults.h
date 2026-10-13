@@ -645,6 +645,10 @@
 #ifndef NV_INIT_ERROR_REVOKES_AUTHORITY
 #define NV_INIT_ERROR_REVOKES_AUTHORITY ON                        // ON revokes startup authority trust if NV reports an init/read fault
 #endif
+#ifndef ST4_HOME_BUTTON
+#define ST4_HOME_BUTTON             OFF                         // 赤经双键长按三秒回零
+#endif
+
 #ifndef HOME_FAST_RATE
 #define HOME_FAST_RATE              9                           // 回零快速档位
 #endif

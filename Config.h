@@ -181,8 +181,10 @@
 // --- ST4 接口 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#ST4
 // *** 请自行确认接口符合所有已连接设备的电气规范 使用风险由用户自行承担 ***
-#define ST4_INTERFACE                     OFF           // [可选] ON 启用接口 非手控模式下导星速率不超过 1 倍速
+#define ST4_INTERFACE                     ON            // [可选] ON 启用接口 非手控模式下导星速率不超过 1 倍速
                                                         //        自动寻星期间按下按钮可中止转动 或继续执行中天翻转在原点的暂停
+#define ST4_HOME_BUTTON                   ON            // 赤经双键长按三秒回零
+#define ST4_INTERFACE_INIT                INPUT         // ST4 使用板上外部上拉
 #define ST4_HAND_CONTROL                  ON            // [可选] ON 启用手控器特殊功能和 SHC 支持
                                                         //        同时按住 [E]+[W] 超过 2 秒 导星速率 [E]- [W]+ [N] 跟踪开关 [S] 同步
                                                         //        同时按住 [N]+[S] 超过 2 秒 用户目录项 [E]- [W]+ [N] 自动寻星 [S] 声音开关

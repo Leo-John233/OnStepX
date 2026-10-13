@@ -379,6 +379,10 @@
   #error "Configuration (Config.h): Setting MOUNT_ENABLE_IN_STANDBY unknown, use ON or OFF"
 #endif
 
+#if ST4_HOME_BUTTON != ON && ST4_HOME_BUTTON != OFF
+  #error "ST4_HOME_BUTTON must be ON or OFF"
+#endif
+
 #if HOME_FAST_RATE < 1 || HOME_FAST_RATE > 9 || HOME_OFFSET_RATE < 1 || HOME_OFFSET_RATE > 9
   #error "HOME_FAST_RATE and HOME_OFFSET_RATE must be 1 through 9"
 #endif

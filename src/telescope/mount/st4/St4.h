@@ -19,6 +19,11 @@ class St4 {
     #endif
 
   private:
+    #if ST4_INTERFACE == ON && ST4_HAND_CONTROL == ON && ST4_HOME_BUTTON == ON && GOTO_FEATURE == ON
+    bool handleHomeButton(bool combination, bool held, bool allReleased);
+    bool homeButtonLatched = false;
+    bool homeButtonPending = false;
+    #endif
     uint8_t handleSerialST4 = 0;
 };
 

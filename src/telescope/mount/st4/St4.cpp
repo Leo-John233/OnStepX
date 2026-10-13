@@ -12,6 +12,7 @@
 #include "../guide/Guide.h"
 #include "../goto/Goto.h"
 #include "../status/Status.h"
+#include "../home/Home.h"
 
 #if ST4_INTERFACE == ON
   #include "../../../lib/pushButton/PushButton.h"
@@ -54,8 +55,31 @@
     if (tasks.add(rate, 0, true, 2, st4Wrapper, "St4Mntr")) { VLF("success"); } else { VLF("FAILED!"); }
   }
 
+  #if ST4_HAND_CONTROL == ON && ST4_HOME_BUTTON == ON && GOTO_FEATURE == ON
+  // 长按只触发一次 等待导星停止后再启动回零
+  bool St4::handleHomeButton(bool combination, bool held, bool allReleased) {
+    if (!homeButtonLatched && held) {
+      homeButtonLatched = true;
+      homeButtonPending = combination && goTo.state == GS_NONE && !goTo.isHomePaused() && home.state == HS_NONE;
+      if (homeButtonPending) guide.stop();
+    }
+    if (!homeButtonLatched) return false;
+    if (homeButtonPending) {
+      if (!combination || goTo.state != GS_NONE || home.state != HS_NONE) homeButtonPending = false;
+      else if (!mount.isSlewing() && guide.state == GU_NONE) {
+        homeButtonPending = false;
+        if (home.request() == CE_NONE) mountStatus.soundBeep();
+      }
+    }
+    if (allReleased) homeButtonLatched = false;
+    return true;
+  }
+  #endif
+
   void St4::poll() {
     static bool shcActive = false;
+    static GuideAction lastSt4GuideActionAxis1 = GA_BREAK;
+    static GuideAction lastSt4GuideActionAxis2 = GA_BREAK;
 
     st4Axis1Rev.poll();
     if (!shcActive) {
@@ -107,13 +131,24 @@
       // standard hand control
       const long Shed_ms = 4000;
 
+      static bool altModeA = false;
+      static bool altModeB = false;
+      #if ST4_HOME_BUTTON == ON && GOTO_FEATURE == ON
+        bool combination = st4Axis1Rev.isDown() && st4Axis1Fwd.isDown() && st4Axis2Fwd.isUp() && st4Axis2Rev.isUp();
+        bool held = combination && st4Axis1Rev.timeDown() >= 3000 && st4Axis1Fwd.timeDown() >= 3000;
+        bool released = st4Axis1Rev.isUp() && st4Axis1Fwd.isUp() && st4Axis2Fwd.isUp() && st4Axis2Rev.isUp();
+        if (handleHomeButton(combination, held, released)) {
+          altModeA = altModeB = false;
+          lastSt4GuideActionAxis1 = lastSt4GuideActionAxis2 = GA_BREAK;
+          return;
+        }
+      #endif
+
       // stop any guide that might be triggered by combination button presses
       if (st4Axis1Rev.isDown() && st4Axis1Fwd.isDown()) guide.stopAxis1();
       if (st4Axis2Fwd.isDown() && st4Axis2Rev.isDown()) guide.stopAxis2();
   
       // see if a combination was down for long enough for an alternate mode
-      static bool altModeA = false;
-      static bool altModeB = false;
 
       #if GOTO_FEATURE == ON
         const long AltMode_ms = 2000;
@@ -239,7 +274,6 @@
       // guide E/W
       bool pulseGuiding = GUIDE_SEPARATE_PULSE_RATE == ON && ST4_HAND_CONTROL != ON;
       GuideAction st4GuideActionAxis1 = GA_BREAK;
-      static GuideAction lastSt4GuideActionAxis1 = GA_BREAK;
       if (st4Axis1Fwd.isDown() && st4Axis1Rev.isUp()) st4GuideActionAxis1 = GA_FORWARD;
       if (st4Axis1Rev.isDown() && st4Axis1Fwd.isUp()) st4GuideActionAxis1 = GA_REVERSE;
 
@@ -256,7 +290,6 @@
 
       // guide N/S
       GuideAction st4GuideActionAxis2 = GA_BREAK;
-      static GuideAction lastSt4GuideActionAxis2 = GA_BREAK;
       if (st4Axis2Fwd.isDown() && st4Axis2Rev.isUp()) st4GuideActionAxis2 = GA_FORWARD;
       if (st4Axis2Rev.isDown() && st4Axis2Fwd.isUp()) st4GuideActionAxis2 = GA_REVERSE;
 

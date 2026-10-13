@@ -242,6 +242,41 @@ int main() {
 }
 ''')
 
+
+def st4_button(cxx):
+    body = method('src/telescope/mount/st4/St4.cpp', 'bool St4::handleHomeButton(')
+    run(cxx, 'st4_button', '''
+#include <cassert>
+enum { GS_NONE, HS_NONE=0, GU_NONE=0, CE_NONE=0 };
+struct { int state=0; bool paused=false; bool isHomePaused(){return paused;} } goTo;
+struct { bool moving=false; bool isSlewing(){return moving;} } mount;
+struct { int state=0,stops=0; void stop(){++stops;} } guide;
+struct { int state=0,requests=0; int request(){++requests;return CE_NONE;} } home;
+struct { void soundBeep(){} } mountStatus;
+struct St4 {
+ bool homeButtonLatched=false,homeButtonPending=false;
+ bool handleHomeButton(bool,bool,bool);
+};
+''' + body + '''
+int main(){
+ St4 s;
+ assert(!s.handleHomeButton(true,false,false));assert(home.requests==0);
+ mount.moving=true;guide.state=1;
+ assert(s.handleHomeButton(true,true,false));assert(home.requests==0 && guide.stops==1);
+ mount.moving=false;guide.state=GU_NONE;
+ assert(s.handleHomeButton(true,true,false));assert(home.requests==1);
+ s.handleHomeButton(true,true,false);assert(home.requests==1);
+ home.state=1;s.handleHomeButton(false,false,true);assert(!s.homeButtonLatched);
+ home.state=0;goTo.state=1;s.handleHomeButton(true,true,false);
+ goTo.state=0;s.handleHomeButton(true,true,false);assert(home.requests==1);
+ s.handleHomeButton(false,false,true);
+ mount.moving=true;s.handleHomeButton(true,true,false);
+ s.handleHomeButton(false,false,true);mount.moving=false;
+ s.handleHomeButton(false,false,true);assert(home.requests==1);
+ s.handleHomeButton(true,true,false);assert(home.requests==2);
+}
+''')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cxx', default='g++')
@@ -250,5 +285,6 @@ if __name__ == '__main__':
     rates(args.cxx)
     physical_limits(args.cxx)
     goto_outcomes(args.cxx)
+    st4_button(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)
