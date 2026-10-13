@@ -229,6 +229,7 @@ int main() {
 def goto_outcomes(cxx):
     path = 'src/telescope/mount/goto/Goto.cpp'
     methods = '\n'.join(method(path, sig) for sig in ['void Goto::abort(', 'void Goto::finish()'])
+    methods += '\n' + method('src/telescope/mount/goto/Goto.h', 'void cancelAlignment()').replace('void cancelAlignment()', 'void Goto::cancelAlignment()')
     request = method(path, 'CommandError Goto::request(Coordinate')
     setup = request[request.index('trackingBeforeGoto ='):request.index('guide.backlashEnableControl')]
     run(cxx, 'goto_outcomes', '''
@@ -244,10 +245,13 @@ struct Goto {
  int state=GS_GOTO,stage=GG_DESTINATION,taskHandle=1,pendingAlignStars=0;
  bool safetyAborted=false,trackingOnSuccess=true,trackingBeforeGoto=false,ordinaryGoto=true,firstGoto=true;
  struct { bool paused=false,resume=false; } meridianFlipHome;
- void abort(bool safety=false);void finish();void prepare();
+ void abort(bool safety=false);void finish();void prepare();void cancelAlignment();
 };
 ''' + methods + '\nvoid Goto::prepare() {\n' + setup + '\n}\n' + '''
 int main() {
+ Goto cancelled; cancelled.state=GS_NONE; cancelled.pendingAlignStars=2;
+ cancelled.abort(); assert(cancelled.pendingAlignStars==0);
+ cancelled.pendingAlignStars=2;cancelled.cancelAlignment();assert(cancelled.pendingAlignStars==0);
  Goto repeat; repeat.firstGoto=false; mount.on=false; repeat.prepare();
  assert(repeat.trackingOnSuccess && !mount.on); repeat.finish(); assert(mount.on);
  repeat=Goto(); repeat.firstGoto=false; mount.on=false; repeat.prepare();

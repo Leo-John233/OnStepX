@@ -94,6 +94,7 @@ bool Home::command(char *reply, char *command, char *parameter, bool *suppressFr
     //            Returns: Nothing
     if (command[1] == 'F' && parameter[0] == 0) {
       // 用户确认机械原点后重建坐标
+      goTo.cancelAlignment();
       *commandError = reset(true, true);
       if (*commandError == CE_NONE) park.reset();
       limits.enabled(site.isDateTimeReady() && startupAuthority.trusted());

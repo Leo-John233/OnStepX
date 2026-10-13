@@ -76,6 +76,7 @@ class Goto {
     // 校准申请与回零完成分开处理
     CommandError requestAlignment(uint8_t stars);
     CommandError pollAlignment();
+    inline void cancelAlignment() { pendingAlignStars = 0; }
 
     // reset the alignment model
     void alignReset();
