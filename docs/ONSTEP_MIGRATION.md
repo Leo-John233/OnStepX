@@ -114,6 +114,8 @@ SPI 接线按驱动类型选择 UART 分支保留原 MaxESP4 接线
 | 纯 SPI 串口依赖修正 | deec5f0 |
 | ST4 长按回零 | 60c9c90 |
 | 跨模块回零边界修正 | f4c534a 2e3b185 |
+| 完整对应配置 | caa450d |
+| 旧版回零参数与注释兼容 | cb0a5a8 |
 
 ## 行为说明
 
@@ -125,3 +127,29 @@ HOME_REQUIRED_AFTER_LIMIT 为 ON 时还需要完成回零或确认机械原点
 ST4 赤经双键长按三秒只触发一次 全部松开后重新计次
 短于三秒的两秒组合键仍保持原有手控行为
 无传感器且位置已经丢失时 需要手动放回原点后使用 hF 确认
+
+## 验证记录
+
+源码模拟检查命令
+
+```text
+python tests/migration/run.py --cxx D:/MinGW/bin/g++.exe
+```
+
+已通过恢复锁 回零速度 独立限位 GOTO 结果 ST4 按钮 回零偏置两种模式
+以及旧版偏置配置 原生偏置配置 零偏置配置和回零完成状态 共 11 组检查
+引脚编译检查覆盖 TMC5160 SPI 与 TMC2209 UART
+配置对照覆盖同名参数与改名参数 旧有注释保持原文
+
+完整编译使用 ESP32 core 2.0.17 与仓库 libraries
+开发板为 ESP32 Dev Module Flash 为 16MB 分区为 16M Flash 3MB APP/9.9MB FATFS
+
+```text
+arduino-cli compile --jobs 4 --fqbn esp32:esp32:esp32:FlashSize=16M,PartitionScheme=app3M_fat9M_16MB --libraries libraries .
+```
+
+TMC5160 SPI 完整编译通过 程序占用 1303557 字节 RAM 占用 52012 字节
+TMC2209 UART 完整编译通过 程序占用 1305633 字节 RAM 占用 51676 字节
+UART 使用临时副本 仅修改两轴驱动型号 工作区保持 TMC5160 SPI 配置
+编译副本中的 427 个源码文件与工作区一致 全部配置宏值一致
+板上原点 限位 电机方向和偏置距离仍需实机验证 本次未上传固件
