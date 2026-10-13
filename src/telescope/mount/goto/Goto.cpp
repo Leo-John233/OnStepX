@@ -120,7 +120,8 @@ CommandError Goto::request(Coordinate coords, PierSideSelect pierSideSelect, boo
   mount.syncFromOnStepToEncoders = false;
   trackingBeforeGoto = mount.isTracking();
   ordinaryGoto = home.state != HS_HOMING && park.state != PS_PARKING;
-  trackingOnSuccess = ordinaryGoto && firstGoto;
+  // 普通 GOTO 到达后开启跟踪 不限于首次定位
+  trackingOnSuccess = ordinaryGoto && !trackingBeforeGoto;
   safetyAborted = false;
   guide.backlashEnableControl(true);
 

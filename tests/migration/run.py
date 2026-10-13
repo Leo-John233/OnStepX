@@ -218,10 +218,12 @@ int main() {
 def goto_outcomes(cxx):
     path = 'src/telescope/mount/goto/Goto.cpp'
     methods = '\n'.join(method(path, sig) for sig in ['void Goto::abort(', 'void Goto::finish()'])
+    request = method(path, 'CommandError Goto::request(Coordinate')
+    setup = request[request.index('trackingBeforeGoto ='):request.index('guide.backlashEnableControl')]
     run(cxx, 'goto_outcomes', '''
 #include <cassert>
 enum {GS_NONE, GS_GOTO, GG_NONE=0, GG_ABORT, GG_READY_ABORT, GG_DESTINATION=8, PS_PARKING=1, HS_HOMING=1};
-struct { bool on=false; void tracking(bool v) { on=v; } void update() {} } mount;
+struct { bool on=false; bool isTracking(){return on;} void tracking(bool v) { on=v; } void update() {} } mount;
 struct { void setDurationComplete(int) {} } tasks;
 struct { void soundAlert() {} } mountStatus;
 struct Axis { int stops=0; void autoSlewAbort() {++stops;} void setFrequencyScale(float) {} } axis1,axis2;
@@ -231,10 +233,16 @@ struct Goto {
  int state=GS_GOTO,stage=GG_DESTINATION,taskHandle=1;
  bool safetyAborted=false,trackingOnSuccess=true,trackingBeforeGoto=false,ordinaryGoto=true,firstGoto=true;
  struct { bool paused=false,resume=false; } meridianFlipHome;
- void abort(bool safety=false);void finish();
+ void abort(bool safety=false);void finish();void prepare();
 };
-''' + methods + '''
+''' + methods + '\nvoid Goto::prepare() {\n' + setup + '\n}\n' + '''
 int main() {
+ Goto repeat; repeat.firstGoto=false; mount.on=false; repeat.prepare();
+ assert(repeat.trackingOnSuccess && !mount.on); repeat.finish(); assert(mount.on);
+ repeat=Goto(); repeat.firstGoto=false; mount.on=false; repeat.prepare();
+ repeat.abort(); repeat.finish(); assert(!mount.on);
+ park.state=PS_PARKING; repeat.prepare(); assert(!repeat.trackingOnSuccess); park.state=0;
+ home.state=HS_HOMING; repeat.prepare(); assert(!repeat.trackingOnSuccess); home.state=0;
  Goto g; g.finish(); assert(mount.on && !g.firstGoto && g.state==GS_NONE);
  g=Goto();mount.on=false;g.abort();g.finish();assert(!mount.on && g.firstGoto);
  g=Goto();g.trackingBeforeGoto=true;g.abort();g.finish();assert(mount.on);
