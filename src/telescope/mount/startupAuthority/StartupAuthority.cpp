@@ -23,6 +23,8 @@ void StartupAuthority::begin() {
 }
 
 void StartupAuthority::setTrusted(bool state) {
+  // 普通授权不能在恢复锁期间重建已丢失的坐标
+  if (state && homeRequired) return;
   #if NV_INIT_ERROR_REVOKES_AUTHORITY == ON
     if (state && initError.nv) {
       DLF("WRN: Mount, startup authority trust rejected due to NV fault");

@@ -70,7 +70,7 @@ class Home {
     bool isRequestWithReset = false;
     bool failed = false;
 
-    HomeState state;
+    HomeState state = HS_NONE;
 
   private:
     bool offsetActive = false;

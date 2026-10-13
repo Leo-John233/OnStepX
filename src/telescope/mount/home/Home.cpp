@@ -55,6 +55,7 @@ CommandError Home::request() {
     #endif
 
     if (!axis1.physicalLimitReady() || !axis2.physicalLimitReady()) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+    if (mount.motorFault()) return CE_SLEW_ERR_HARDWARE_FAULT;
     failed = false;
     if (!startupAuthority.trusted() && !hasSense && !startupAuthority.canReturnHome()) {
       DLF("WRN: Mount, home rejected because startup authority is not trusted and no home switches are present");
@@ -67,6 +68,8 @@ CommandError Home::request() {
       return CE_SLEW_IN_MOTION;
     }
 
+    isRequestWithReset = false;
+    const bool coordinatesKnown = startupAuthority.trusted();
     wasTracking = mount.isTracking();
     #if AXIS1_SECTOR_GEAR == ON || AXIS2_TANGENT_ARM == OFF
       mount.tracking(false);
@@ -91,11 +94,12 @@ CommandError Home::request() {
 
         // both -180 to 180
         VF("MSG: Mount, homing from a1="); V(radToDeg(a1)); VF(" degrees a2="); V(radToDeg(a2)); VLF(" degrees");
-        if (abs(a1) > degToRad(AXIS1_SENSE_HOME_DIST_LIMIT) - abs(arcsecToRad(settings.axis1.senseOffset))) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-        if (abs(a2) > degToRad(AXIS2_SENSE_HOME_DIST_LIMIT) - abs(arcsecToRad(settings.axis2.senseOffset))) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+        if (coordinatesKnown && abs(a1) > degToRad(AXIS1_SENSE_HOME_DIST_LIMIT) - abs(arcsecToRad(settings.axis1.senseOffset))) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+        if (coordinatesKnown && abs(a2) > degToRad(AXIS2_SENSE_HOME_DIST_LIMIT) - abs(arcsecToRad(settings.axis2.senseOffset))) return CE_SLEW_ERR_OUTSIDE_LIMITS;
 
+        state = HS_HOMING;
         e = reset(false);
-        if (e != CE_NONE) return e;
+        if (e != CE_NONE) { requestAborted(); return e; }
       #endif
 
       VLF("MSG: Mount, guiding to home");
@@ -190,7 +194,7 @@ void Home::poll() {
   }
   if (!offsetActive) return;
   offsetActive = false;
-  if (!axis1.atTarget() || !axis2.atTarget()) { requestAborted(); return; }
+  if (axis1.gotoFailed() || axis2.gotoFailed() || !axis1.atTarget() || !axis2.atTarget()) { requestAborted(); return; }
   state = HS_NONE;
   CommandError e = reset(isRequestWithReset, true);
   failed = e != CE_NONE || !startupAuthority.trusted();
@@ -253,19 +257,21 @@ void Home::guideDone(bool success) {
     #if AXIS1_SECTOR_GEAR == ON 
       VLF("MSG: Mount, sector gear set origin");
       double h = axis1.getInstrumentCoordinate();
-      if (axis1.resetPosition(0.0L) != 0) { DLF("WRN: Home::guideDone(), failed to resetPosition Axis1"); exit; }
-      if (limits.setInstrumentCoordinate(1, h, true) != CE_NONE) { DLF("WRN: Home::guideDone(), failed to setInstrumentCoordinate Axis1"); exit; }
-      mount.tracking(wasTracking);
+      if (axis1.resetPosition(0.0L) != 0) { DLF("WRN: Home::guideDone(), failed to resetPosition Axis1"); requestAborted(); return; }
+      if (limits.setInstrumentCoordinate(1, h, true) != CE_NONE) { DLF("WRN: Home::guideDone(), failed to setInstrumentCoordinate Axis1"); requestAborted(); return; }
     #endif
 
     #if AXIS2_TANGENT_ARM == ON 
       VLF("MSG: Mount, tangent arm set origin");
       double d = axis2.getInstrumentCoordinate();
-      if (axis2.resetPosition(0.0L) != 0) { DLF("WRN: Home::guideDone(), failed to resetPosition Axis2"); exit; }
-      if (limits.setInstrumentCoordinate(2, d, true) != CE_NONE) { DLF("WRN: Home::guideDone(), failed to setInstrumentCoordinate Axis2"); exit; }
+      if (axis2.resetPosition(0.0L) != 0) { DLF("WRN: Home::guideDone(), failed to resetPosition Axis2"); requestAborted(); return; }
+      if (limits.setInstrumentCoordinate(2, d, true) != CE_NONE) { DLF("WRN: Home::guideDone(), failed to setInstrumentCoordinate Axis2"); requestAborted(); return; }
     #endif
 
     mount.captureNominalIndexPositions();
+    startupAuthority.completeHome();
+    failed = !startupAuthority.trusted();
+    if (!failed) mount.tracking(wasTracking);
   #endif
 }
 
@@ -315,7 +321,7 @@ CommandError Home::reset(bool fullReset, bool authoritative) {
       }
     #endif
 
-    bool bypassCoordinateLimit = authoritative;
+    bool bypassCoordinateLimit = authoritative || (hasSense && state == HS_HOMING);
     #if MOUNT_STARTUP_MODE == SA_AUTO && MOUNT_COORDS_MEMORY == OFF
       if (!bypassCoordinateLimit && !axis1.motor->hasAbsoluteEncoder() && !axis2.motor->hasAbsoluteEncoder()) {
         bypassCoordinateLimit = true;
@@ -374,7 +380,11 @@ CommandError Home::reset(bool fullReset, bool authoritative) {
     VLF(")");
   }
 
-  if (authoritative) startupAuthority.completeHome();
+  if (authoritative) {
+    startupAuthority.completeHome();
+    if (!startupAuthority.trusted()) { failed = true; return CE_SLEW_ERR_UNSPECIFIED; }
+    failed = false;
+  }
 
   return CE_NONE;
 }

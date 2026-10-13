@@ -45,6 +45,7 @@ struct Axis {
   bool moving = false, target = true, sensed = false;
   bool motionErrorSensed(int) { return sensed; }
   bool atTarget() { return target; }
+  bool gotoFailed() { return false; }
   void autoSlewAbort() { target = false; }
 } axis1, axis2;
 struct { int state = 0; void abort(bool = false) {} } guide, goTo;
@@ -122,6 +123,8 @@ int main() {
   startupAuthority.requireHome(false);
   assert(!startupAuthority.canReturnHome());
   startupAuthority.requireHome(true);
+  assert(!startupAuthority.canReturnHome());
+  startupAuthority.setTrusted(true);
   assert(!startupAuthority.canReturnHome());
   startupAuthority.completeHome();
   assert(startupAuthority.trusted());
@@ -277,6 +280,66 @@ int main(){
 }
 ''')
 
+
+def home_offsets(cxx):
+    body = method('src/telescope/mount/home/Home.cpp', 'void Home::guideDone(')
+    for at_offsets in (0,1):
+        run(cxx, 'home_offsets_' + str(at_offsets), '''
+#include <cassert>
+#define ON 1
+#define OFF 0
+#define AXIS1_SECTOR_GEAR OFF
+#define AXIS2_TANGENT_ARM OFF
+#define HOME_OFFSET_RATE 8
+#define DF(x)
+#define D(x)
+#define DLF(x)
+#define VF(x)
+#define V(x)
+#define VLF(x)
+enum {CE_NONE, HS_NONE=0, HS_HOMING=1};
+using CommandError=int;
+unsigned long millis(){return 10;}
+float arcsecToRad(float v){return v/1000;}
+struct { bool trust=false; bool trusted(){return trust;} } startupAuthority;
+struct { bool syncFromOnStepToEncoders=false; } mount;
+struct { struct { struct { float sign=1; } latitude; } locationEx; } site;
+struct { float homeRate(int, int=1){return 1;} } guide;
+struct Axis {
+ double position=0,target=0; int moves=0,error=0;
+ double getInstrumentCoordinate(){return position;}
+ void setTargetCoordinate(double v){target=v;}
+ int autoGoto(float){++moves;return error;}
+} axis1,axis2;
+struct Home {
+ int state=HS_HOMING,resets=0,resetError=0,aborts=0;
+ bool offsetActive=false,failed=false,isRequestWithReset=false;
+ unsigned long offsetDeadline=0;
+ struct { struct { float senseOffset; } axis1{0},axis2{0}; } settings;
+ bool useOffset(){return settings.axis1.senseOffset!=0||settings.axis2.senseOffset!=0;}
+ int reset(bool, bool authoritative=false){++resets;startupAuthority.trust=authoritative && !resetError;return resetError;}
+ void abort(){++aborts;startupAuthority.trust=false;}
+ void requestAborted(){state=HS_NONE;failed=true;startupAuthority.trust=false;}
+ void guideDone(bool);
+};
+''' + body + '''
+int main(){
+ Home h;h.guideDone(true);
+ assert(startupAuthority.trust && !h.failed && axis1.moves==0 && axis2.moves==0);
+ h=Home();h.settings.axis1.senseOffset=-1500;h.settings.axis2.senseOffset=1000;
+ axis1.position=10;axis2.position=20;h.guideDone(true);
+#if MOUNT_HOME_AT_OFFSETS == OFF
+ assert(h.state==HS_HOMING && h.offsetActive && !startupAuthority.trust);
+ assert(axis1.target==11.5 && axis2.target==19 && axis1.moves==1 && axis2.moves==1);
+ h=Home();h.settings.axis1.senseOffset=1;axis2.error=1;h.guideDone(true);assert(h.aborts==1 && !startupAuthority.trust);
+#else
+ assert(h.state==HS_NONE && !h.offsetActive && startupAuthority.trust && axis1.moves==0);
+#endif
+ h=Home();h.guideDone(false);assert(h.failed && !startupAuthority.trust && h.resets==0);
+ h=Home();h.resetError=1;h.guideDone(true);assert(h.failed && !startupAuthority.trust);
+}
+''', [f'-DMOUNT_HOME_AT_OFFSETS={at_offsets}'])
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cxx', default='g++')
@@ -286,5 +349,6 @@ if __name__ == '__main__':
     physical_limits(args.cxx)
     goto_outcomes(args.cxx)
     st4_button(args.cxx)
+    home_offsets(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)

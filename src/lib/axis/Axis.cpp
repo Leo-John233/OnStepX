@@ -635,6 +635,9 @@ void Axis::poll() {
 
   // respond to the motor disabling itself
   if (autoRate != AR_NONE && !motor->enabled) {
+    if (autoRate == AR_RATE_BY_DISTANCE) gotoAborted = true;
+    if (homingStage != HOME_NONE) homeSuccessful = false;
+    homingStage = HOME_NONE;
     autoRate = AR_NONE;
     freq = 0.0F;
     VF("MSG:"); V(axisPrefix); VLF("motion stopped, motor disabled!");
@@ -727,6 +730,7 @@ void Axis::updatePhysicalLimits() {
   if (errors.minLimitSensed || errors.maxLimitSensed) {
     if (!limitLatched) {
       limitTripDirection = motor->getFrequencySteps() != 0 ? motor->getDirection() : DIR_BOTH;
+      if (limitTripDirection != DIR_FORWARD && limitTripDirection != DIR_REVERSE) limitTripDirection = DIR_BOTH;
     }
     limitLatched = true;
     limitReleasing = false;

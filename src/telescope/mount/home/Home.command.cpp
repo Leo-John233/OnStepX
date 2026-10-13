@@ -16,6 +16,11 @@ bool Home::command(char *reply, char *command, char *parameter, bool *suppressFr
   UNUSED(reply);
   UNUSED(suppressFrame);
   if (command[0] == 'h') {
+    // 回零期间固定偏置和传感器方向
+    if (state == HS_HOMING && command[1] == 'C' && (parameter[0] == '1' || parameter[0] == '2')) {
+      *commandError = CE_SLEW_IN_MOTION;
+      return true;
+    }
     // :h?#       Get home status - has sense, auto home enabled, offset axis1, offset axis2 (in arcseconds.)
     //            Returns: n,n,n,n#
     if (command[1] == '?' && parameter[0] == 0) {

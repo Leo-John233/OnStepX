@@ -174,6 +174,7 @@ bool Mount::command(char *reply, char *command, char *parameter, bool *suppressF
       double f = strtod(parameter,&conv_end);
       if (&parameter[0] != conv_end && ((f >= 30.0 && f < 90.0) || fabs(f) < 0.1)) {
         if (fabs(f) < 0.1) tracking(false); else {
+          if (startupAuthority.needsHome()) { *commandError = CE_SLEW_ERR_IN_STANDBY; return true; }
           #if GOTO_FEATURE == ON
             if (park.state != PS_PARKED) {
               trackingRate = hzToSidereal(f);

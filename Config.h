@@ -159,7 +159,7 @@
 // --- 回零确认 ---
 #define HOME_FAST_RATE                    9             // 回零快速 1 至 9 档
 #define HOME_SLOW_RATE                    7             // 回零慢速 精找再降为六分之一
-#define HOME_OFFSET_RATE                  7             // 回零偏置 1 至 9 档
+#define HOME_OFFSET_RATE                  8             // 回零偏置 1 至 9 档
 #define HOME_REQUIRED_ON_BOOT             ON            // 开机先回零或确认机械原点
 #define HOME_REQUIRED_AFTER_LIMIT         ON            // 物理限位后重新回零
 #define MOTOR_HOLD_ON_BOOT                ON            // 开机使能电机保持 不启动跟踪

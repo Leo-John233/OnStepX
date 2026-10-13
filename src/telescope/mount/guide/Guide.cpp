@@ -220,12 +220,14 @@ CommandError Guide::startHome() {
       if (e != CE_NONE) { abort(); return e; }
     #endif
 
-    guideFinishTimeAxis2 = millis() + (unsigned long)(GUIDE_HOME_TIME_LIMIT * 1000.0);
-    guideActionAxis2 = GA_HOME;
-    axis2.setHomeRefineRate(HOME_SLOW_RATE == OFF ? 0.0F : homeRate(HOME_SLOW_RATE, 2));
-    axis2.setFrequencySlew(homeRate(HOME_FAST_RATE, 2));
-    e = axis2.autoSlewHome();
-    if (e != CE_NONE) { abort(); return e; }
+    #if AXIS2_SENSE_HOME != OFF
+      guideFinishTimeAxis2 = millis() + (unsigned long)(GUIDE_HOME_TIME_LIMIT * 1000.0);
+      guideActionAxis2 = GA_HOME;
+      axis2.setHomeRefineRate(HOME_SLOW_RATE == OFF ? 0.0F : homeRate(HOME_SLOW_RATE, 2));
+      axis2.setFrequencySlew(homeRate(HOME_FAST_RATE, 2));
+      e = axis2.autoSlewHome();
+      if (e != CE_NONE) { abort(); return e; }
+    #endif
   #else
     DLF("WRN: Mount, sensed home rejected because goto is disabled");
     return CE_SLEW_ERR_UNSPECIFIED;
@@ -340,6 +342,7 @@ bool Guide::validAxis2(GuideAction guideAction) {
 
 // general validation of guide request
 CommandError Guide::validate(int axis, GuideAction guideAction) {
+  if (home.state == HS_HOMING && guideAction != GA_HOME) return CE_SLEW_IN_MOTION;
   if (!mount.isEnabled()) {
     mount.enable(true);
     if (!mount.isEnabled()) return CE_SLEW_ERR_IN_STANDBY;
@@ -485,7 +488,10 @@ void Guide::poll() {
     if (state == GU_HOME_GUIDE) {
       VLF("MSG: Guide, arrival at home detected");
       state = GU_NONE;
-      bool success = axis2.homeSucceeded();
+      bool success = true;
+      #if AXIS2_SENSE_HOME != OFF
+        success = axis2.homeSucceeded();
+      #endif
       #if AXIS1_SECTOR_GEAR == ON || AXIS2_TANGENT_ARM == OFF
         success = success && axis1.homeSucceeded();
       #endif
