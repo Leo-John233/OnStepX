@@ -54,6 +54,7 @@ CommandError Home::request() {
       return CE_SLEW_ERR_UNSPECIFIED;
     #endif
 
+    if (!axis1.physicalLimitReady() || !axis2.physicalLimitReady()) return CE_SLEW_ERR_OUTSIDE_LIMITS;
     failed = false;
     if (!startupAuthority.trusted() && !hasSense && !startupAuthority.canReturnHome()) {
       DLF("WRN: Mount, home rejected because startup authority is not trusted and no home switches are present");
@@ -278,6 +279,7 @@ void Home::requestDone() {
 
 // reset mount at home
 CommandError Home::reset(bool fullReset, bool authoritative) {
+  if (authoritative && (!axis1.physicalLimitReady() || !axis2.physicalLimitReady() || mount.motorFault())) return CE_SLEW_ERR_OUTSIDE_LIMITS;
   if (offsetActive || abortPending) { abort(); return CE_SLEW_IN_MOTION; }
   #if GOTO_FEATURE == ON
     if (goTo.state != GS_NONE) {

@@ -168,11 +168,55 @@ int main() {
 }
 ''')
 
+
+def physical_limits(cxx):
+    path = 'src/lib/axis/Axis.cpp'
+    methods = '\n'.join(method(path, sig) for sig in ['void Axis::updatePhysicalLimits()', 'bool Axis::physicalLimitReady()', 'bool Axis::physicalLimitBlocked('])
+    run(cxx, 'physical_limits', '''
+#include <cassert>
+using ulong = unsigned long;
+ulong now = 0; ulong millis() { return now; }
+enum Direction { DIR_REVERSE=-1, DIR_BOTH=0, DIR_FORWARD=1 };
+struct { bool pins[4] = {}; bool isOn(int i) { return pins[i]; } } sense;
+struct Motor { float frequency = 0; Direction direction=DIR_FORWARD; float getFrequencySteps() { return frequency; } Direction getDirection() { return direction; } };
+struct Axis {
+ Motor storage; Motor *motor=&storage;
+ int minSenseHandle=0, maxSenseHandle=1;
+ struct { bool minLimitSensed=false, maxLimitSensed=false; } errors;
+ bool commonMinMaxSense=false, limitLatched=false, limitReleasing=false, heldMinLimit=false, heldMaxLimit=false;
+ ulong limitReleaseTime=0; Direction limitTripDirection=DIR_BOTH;
+ void updatePhysicalLimits(); bool physicalLimitReady(); bool physicalLimitBlocked(Direction);
+};
+''' + methods + '''
+int main() {
+ Axis a, b; b.minSenseHandle=2; b.maxSenseHandle=3;
+ a.commonMinMaxSense=true; a.motor->frequency=10;
+ assert(a.physicalLimitReady());
+ sense.pins[0]=true;
+ assert(a.physicalLimitBlocked(DIR_FORWARD));
+ assert(!a.physicalLimitBlocked(DIR_REVERSE));
+ assert(a.physicalLimitBlocked(DIR_BOTH));
+ assert(b.physicalLimitReady());
+ a.motor->direction=DIR_REVERSE;
+ assert(!a.physicalLimitBlocked(DIR_REVERSE));
+ sense.pins[0]=false; now=100;
+ assert(!a.physicalLimitReady()); now=599; assert(!a.physicalLimitReady());
+ sense.pins[0]=true; a.updatePhysicalLimits(); sense.pins[0]=false;
+ now=600; assert(!a.physicalLimitReady()); now=1100; assert(a.physicalLimitReady());
+ a.motor->frequency=0; sense.pins[0]=true;
+ assert(a.physicalLimitBlocked(DIR_FORWARD) && a.physicalLimitBlocked(DIR_REVERSE));
+ sense.pins[2]=true;
+ assert(b.physicalLimitBlocked(DIR_REVERSE) && !b.physicalLimitBlocked(DIR_FORWARD));
+ sense.pins[3]=true; assert(b.physicalLimitBlocked(DIR_FORWARD));
+}
+''')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cxx', default='g++')
     args = parser.parse_args()
     authority(args.cxx)
     rates(args.cxx)
+    physical_limits(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)

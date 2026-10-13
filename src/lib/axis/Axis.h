@@ -436,6 +436,11 @@ public:
   // hint that min and max pins are the same (no directional limit indication)
   bool commonMinMaxSense = false;
 
+  // 每轴独立记录限位 释放稳定后才允许自动运动
+  bool physicalLimitReady();
+  bool physicalLimitBlocked(Direction direction);
+  void updatePhysicalLimits();
+
 private:
   // set frequency in "measures" (degrees, microns, etc.) per second (0 stops motion)
   void setFrequency(float frequency);
@@ -529,6 +534,12 @@ private:
   float abortAccelTime = NAN;  // abort slew acceleration time in seconds
 
   HomingStage homingStage = HOME_NONE;
+  bool limitLatched = false;
+  bool limitReleasing = false;
+  unsigned long limitReleaseTime = 0;
+  Direction limitTripDirection = DIR_BOTH;
+  bool heldMinLimit = false;
+  bool heldMaxLimit = false;
   bool homeSuccessful = false;
   float homeRefineRate = 0.0F;
 

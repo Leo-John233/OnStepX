@@ -503,8 +503,7 @@ void Axis::poll() {
   if (axisNumber == 0) return;
 
   // check physical limit switches
-  errors.minLimitSensed = sense.isOn(minSenseHandle);
-  errors.maxLimitSensed = sense.isOn(maxSenseHandle);
+  updatePhysicalLimits();
   bool commonMinMaxSensed = commonMinMaxSense && (errors.minLimitSensed || errors.maxLimitSensed);
 
   // let the user know if the associated senses change state
@@ -719,19 +718,53 @@ void Axis::setMotionLimitsCheck(bool state) {
   limitsCheck = state;
 }
 
+// 只记录本轴触发时的运动方向 不根据另一轴或坐标猜测
+void Axis::updatePhysicalLimits() {
+  errors.minLimitSensed = sense.isOn(minSenseHandle);
+  errors.maxLimitSensed = sense.isOn(maxSenseHandle);
+  if (errors.minLimitSensed || errors.maxLimitSensed) {
+    if (!limitLatched) {
+      limitTripDirection = motor->getFrequencySteps() != 0 ? motor->getDirection() : DIR_BOTH;
+    }
+    limitLatched = true;
+    limitReleasing = false;
+    heldMinLimit |= errors.minLimitSensed;
+    heldMaxLimit |= errors.maxLimitSensed;
+  } else if (limitLatched) {
+    if (!limitReleasing) { limitReleaseTime = millis(); limitReleasing = true; }
+    if ((unsigned long)(millis() - limitReleaseTime) >= 500UL) {
+      limitLatched = false;
+      heldMinLimit = heldMaxLimit = false;
+    }
+  }
+}
+
+bool Axis::physicalLimitReady() {
+  updatePhysicalLimits();
+  return !limitLatched;
+}
+
+bool Axis::physicalLimitBlocked(Direction direction) {
+  updatePhysicalLimits();
+  if (!limitLatched) return false;
+  if (direction == DIR_BOTH) return true;
+  if (commonMinMaxSense) return limitTripDirection == DIR_BOTH || direction == limitTripDirection;
+  return (direction == DIR_REVERSE && heldMinLimit) || (direction == DIR_FORWARD && heldMaxLimit);
+}
+
 bool Axis::motionError(Direction direction) {
   bool result = false;
 
-  if (motor->isStalled(getInstrumentCoordinate())) return true;
+  if (physicalLimitBlocked(direction) || motor->isStalled(getInstrumentCoordinate())) return true;
 
   if (direction == DIR_FORWARD || direction == DIR_BOTH) {
     result = getInstrumentCoordinateSteps() > lroundf(0.9F*INT32_MAX) ||
              (limitsCheck && homingStage == HOME_NONE && getInstrumentCoordinate() > maxMeasure->value + 1.0F/stepsPerMeasureValue) ||
              (!commonMinMaxSense && errors.maxLimitSensed);
     if (result == true && result != lastErrorResult) { VF("MSG:"); V(axisPrefix); VLF("motion error forward limit"); }
-  } else
+  }
 
-  if (direction == DIR_REVERSE || direction == DIR_BOTH) {
+  if (!result && (direction == DIR_REVERSE || direction == DIR_BOTH)) {
     result = getInstrumentCoordinateSteps() < lroundf(0.9F*INT32_MIN) ||
              (limitsCheck && homingStage == HOME_NONE && getInstrumentCoordinate() < minMeasure->value - 1.0F/stepsPerMeasureValue) ||
              (!commonMinMaxSense && errors.minLimitSensed);
@@ -744,6 +777,7 @@ bool Axis::motionError(Direction direction) {
 }
 
 bool Axis::motionErrorSensed(Direction direction) {
+  updatePhysicalLimits();
   if ((direction == DIR_REVERSE || direction == DIR_BOTH) && errors.minLimitSensed) return true; else
   if ((direction == DIR_FORWARD || direction == DIR_BOTH) && errors.maxLimitSensed) return true; else return false;
 }

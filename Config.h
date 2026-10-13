@@ -86,9 +86,10 @@
 
 #define AXIS1_POWER_DOWN                  OFF           // [少改] ON 运动停止 30 秒后关闭电源 或最后一次不超过 1 倍速导星 10 分钟后关闭电源
 
-#define AXIS1_SENSE_HOME                  OFF           // [可选] HIGH 或 LOW 用于启用并指定从正面观察时顺时针方向的原点状态
-#define AXIS1_SENSE_LIMIT_MIN             LIMIT_SENSE   // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
-#define AXIS1_SENSE_LIMIT_MAX             LIMIT_SENSE   // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
+#define AXIS1_SENSE_HOME                  LOW           // [可选] HIGH 或 LOW 用于启用并指定从正面观察时顺时针方向的原点状态
+#define AXIS1_SENSE_LIMIT_INIT            INPUT         // 图纸限位引脚使用外部上拉
+#define AXIS1_SENSE_LIMIT_MIN             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
+#define AXIS1_SENSE_LIMIT_MAX             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
                                                         //        数字输入可选添加 |HYST(n) 其中 n=0..1023 表示稳定时间 单位为 ms
                                                         //        支持模拟量的感应输入还可添加
                                                         //        |THLD(n) 其中 n=1..1023 ADU 表示模拟阈值
@@ -123,9 +124,10 @@
 
 #define AXIS2_POWER_DOWN                  OFF           // [可选] ON 运动停止 30 秒后关闭电源 或最后一次不超过 1 倍速导星 10 分钟后关闭电源
 
-#define AXIS2_SENSE_HOME                  OFF           // [可选] HIGH 或 LOW 用于启用并指定从上方观察时顺时针方向的原点状态
-#define AXIS2_SENSE_LIMIT_MIN             LIMIT_SENSE   // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
-#define AXIS2_SENSE_LIMIT_MAX             LIMIT_SENSE   // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
+#define AXIS2_SENSE_HOME                  HIGH           // [可选] HIGH 或 LOW 用于启用并指定从上方观察时顺时针方向的原点状态
+#define AXIS2_SENSE_LIMIT_INIT            INPUT         // 图纸限位引脚使用外部上拉
+#define AXIS2_SENSE_LIMIT_MIN             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
+#define AXIS2_SENSE_LIMIT_MAX             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
 
 // --- 架台类型 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#MOUNT

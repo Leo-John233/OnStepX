@@ -361,15 +361,21 @@ CommandError Guide::validate(int axis, GuideAction guideAction) {
   }
 
   if (axis == 1 || guideAction == GA_SPIRAL) {
+    Direction direction = guideAction == GA_FORWARD ? DIR_FORWARD : guideAction == GA_REVERSE ? DIR_REVERSE : DIR_BOTH;
+    if (axis1.physicalLimitBlocked(direction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
     if (!validAxis1(guideAction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-    if (settings.axis1RateSelect < 3) {
+    if (settings.axis1RateSelect < 3 && !startupAuthority.needsHome()) {
       if (limits.isError() || axis1.motionError(DIR_BOTH)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
     }
   }
 
   if (axis == 2 || guideAction == GA_SPIRAL) {
+    Direction direction = guideAction == GA_FORWARD ? DIR_FORWARD : guideAction == GA_REVERSE ? DIR_REVERSE : DIR_BOTH;
+    if (mount.getMountPosition(CR_MOUNT).pierSide == PIER_SIDE_WEST && direction != DIR_BOTH)
+      direction = direction == DIR_FORWARD ? DIR_REVERSE : DIR_FORWARD;
+    if (axis2.physicalLimitBlocked(direction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
     if (!validAxis2(guideAction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-    if (settings.axis2RateSelect < 3) {
+    if (settings.axis2RateSelect < 3 && !startupAuthority.needsHome()) {
       if (limits.isError() || axis2.motionError(DIR_BOTH)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
     }
   }

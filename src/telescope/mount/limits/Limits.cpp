@@ -13,6 +13,8 @@
 #include "../goto/Goto.h"
 #include "../guide/Guide.h"
 #include "../site/Site.h"
+#include "../home/Home.h"
+#include "../startupAuthority/StartupAuthority.h"
 
 inline void limitsWrapper() { limits.poll(); }
 
@@ -283,6 +285,7 @@ uint8_t Limits::errorCode() {
 }
 
 void Limits::stop() {
+  home.abort();
   #if GOTO_FEATURE == ON
     goTo.abort();
   #endif
@@ -434,6 +437,19 @@ void Limits::poll() {
     error.limit.axis2.max = false;
     error.meridian.east = false;
     error.meridian.west = false;
+  }
+
+  // 新触发时停止两轴 后续仅允许触发轴反向退出
+  bool min1 = axis1.motionErrorSensed(DIR_REVERSE);
+  bool max1 = axis1.motionErrorSensed(DIR_FORWARD);
+  bool min2 = axis2.motionErrorSensed(DIR_REVERSE);
+  bool max2 = axis2.motionErrorSensed(DIR_FORWARD);
+  if ((min1 && !lastError.limitSense.axis1.min) || (max1 && !lastError.limitSense.axis1.max) ||
+      (min2 && !lastError.limitSense.axis2.min) || (max2 && !lastError.limitSense.axis2.max)) {
+    #if HOME_REQUIRED_AFTER_LIMIT == ON
+      startupAuthority.requireHome(!home.hasSense && startupAuthority.trusted());
+    #endif
+    stop();
   }
 
   // min and max limit switches
