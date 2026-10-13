@@ -357,6 +357,8 @@ public:
 
   // returns true homing is in progress
   bool isHoming() { return homingStage != HOME_NONE; }
+  // 仅完整经过传感器精找才算成功
+  bool homeSucceeded() const { return homeSuccessful; }
 
   // returns true if a home sensor is available
   inline bool hasHomeSense() { return pins->axisSense.homeTrigger != OFF; }
@@ -524,6 +526,7 @@ private:
   float abortAccelTime = NAN;  // abort slew acceleration time in seconds
 
   HomingStage homingStage = HOME_NONE;
+  bool homeSuccessful = false;
 
   const AxisPins *pins;
 

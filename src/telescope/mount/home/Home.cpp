@@ -48,6 +48,7 @@ void Home::init() {
 
 // move mount to the home position
 CommandError Home::request() {
+    if (state != HS_NONE) { abort(); return CE_SLEW_IN_MOTION; }
     #if GOTO_FEATURE == OFF
       DLF("WRN: Mount, home rejected because goto is disabled");
       return CE_SLEW_ERR_UNSPECIFIED;
@@ -58,7 +59,7 @@ CommandError Home::request() {
       DLF("WRN: Mount, home rejected because startup authority is not trusted and no home switches are present");
       return CE_SLEW_ERR_UNSPECIFIED;
     }
-    if (!site.dateIsReady || !site.timeIsReady) return CE_SLEW_ERR_IN_STANDBY;
+    if (!hasSense && (!site.dateIsReady || !site.timeIsReady)) return CE_SLEW_ERR_IN_STANDBY;
     if (goTo.state != GS_NONE) return CE_SLEW_IN_MOTION;
     if (guide.state != GU_NONE) {
       if (guide.state == GU_HOME_GUIDE) guide.stop();
@@ -78,6 +79,10 @@ CommandError Home::request() {
 
     if (hasSense) {
       CommandError e;
+      // 传感器回零开始后 暂停普通自动运动
+      startupAuthority.requireHome();
+      abortPending = false;
+      offsetActive = false;
 
       #if AXIS1_SECTOR_GEAR == OFF && AXIS2_TANGENT_ARM == OFF
         double a1 = axis1.getInstrumentCoordinate() - homePosition.a1;
@@ -100,7 +105,7 @@ CommandError Home::request() {
       #endif
       e = guide.startHome();
       if (e != CE_NONE) {
-        state = HS_NONE;
+        abort();
         return e;
       }
     } else {
@@ -156,26 +161,53 @@ CommandError Home::requestWithReset() {
 void Home::requestAborted() {
   state = HS_NONE;
   failed = true;
-  mount.tracking(wasTracking);
+  offsetActive = false;
+  abortPending = false;
+  startupAuthority.requireHome();
+  mount.tracking(false);
+}
+
+void Home::abort() {
+  if (state == HS_NONE) return;
+  abortPending = true;
+  startupAuthority.requireHome();
+  goTo.abort();
+  guide.abort();
+  axis1.autoSlewAbort();
+  axis2.autoSlewAbort();
+}
+
+// 偏置按目标步数完成 不以运行时间代替实际到位
+void Home::poll() {
+  if (state != HS_HOMING) return;
+  if (offsetActive && (mount.motorFault() || axis1.motionErrorSensed(DIR_BOTH) || axis2.motionErrorSensed(DIR_BOTH) ||
+      (long)(millis() - offsetDeadline) >= 0)) abort();
+  if (mount.isSlewing()) return;
+  if (abortPending) {
+    if (guide.state == GU_NONE && goTo.state == GS_NONE) requestAborted();
+    return;
+  }
+  if (!offsetActive) return;
+  offsetActive = false;
+  if (!axis1.atTarget() || !axis2.atTarget()) { requestAborted(); return; }
+  state = HS_NONE;
+  CommandError e = reset(isRequestWithReset, true);
+  failed = e != CE_NONE || !startupAuthority.trusted();
+  if (failed) startupAuthority.requireHome();
+  else mount.syncFromOnStepToEncoders = true;
 }
 
 // after finding home switches displace the mount axes as specified
 void Home::guideDone(bool success) {
   if (!success) {
-    state = HS_NONE;
-    failed = true;
-    CommandError e = reset(isRequestWithReset);
-    if (e != CE_NONE) {
-      DF("WRN: Home::guideDone(), reset after sensed home failure failed (code "); D(e); DLF(")");
-    } else {
-      DLF("WRN: Home::guideDone(), sensed home failed");
-    }
+    requestAborted();
     return;
   }
 
   #if AXIS1_SECTOR_GEAR == OFF && AXIS2_TANGENT_ARM == OFF
     if (useOffset()) {
-      CommandError e = reset(isRequestWithReset, true);
+      // 先建立传感器坐标 偏置到位后再授予位置可信状态
+      CommandError e = reset(false);
       if (e != CE_NONE) {
         state = HS_NONE;
         failed = true;
@@ -189,14 +221,19 @@ void Home::guideDone(bool success) {
         double a2 = axis2.getInstrumentCoordinate() - arcsecToRad(settings.axis2.senseOffset);
         V(radToDeg(a1)); VF(","); V(radToDeg(a2)); VLF(")");
         axis1.setTargetCoordinate(a1);
-        axis1.autoGoto(goTo.getRadsPerSecond());
         axis2.setTargetCoordinate(a2);
-        axis2.autoGoto(goTo.getRadsPerSecond());
+        offsetActive = true;
+        offsetDeadline = millis() + 600000UL;
+        e = axis1.autoGoto(goTo.getRadsPerSecond());
+        if (e == CE_NONE) e = axis2.autoGoto(goTo.getRadsPerSecond());
+        if (e != CE_NONE) abort();
+        return;
       #endif
       mount.syncFromOnStepToEncoders = true;
 
       state = HS_NONE;
-      failed = false;
+      e = reset(isRequestWithReset, true);
+      failed = e != CE_NONE || !startupAuthority.trusted();
     } else {
       state = HS_NONE;
       CommandError e = reset(isRequestWithReset, true);
@@ -241,6 +278,7 @@ void Home::requestDone() {
 
 // reset mount at home
 CommandError Home::reset(bool fullReset, bool authoritative) {
+  if (offsetActive || abortPending) { abort(); return CE_SLEW_IN_MOTION; }
   #if GOTO_FEATURE == ON
     if (goTo.state != GS_NONE) {
       axis1.autoSlewAbort();

@@ -20,6 +20,71 @@ def run(cxx, name, text, flags=()):
     subprocess.run([str(exe)], check=True)
     print(name + ': PASS', flush=True)
 
+def method(path, signature):
+    text = (ROOT / path).read_text(encoding='utf-8')
+    start = text.index(signature)
+    brace = text.index('{', start)
+    depth = 1
+    end = brace + 1
+    while depth:
+        depth += (text[end] == '{') - (text[end] == '}')
+        end += 1
+    return text[start:end]
+
+def homing(cxx):
+    path = 'src/telescope/mount/home/Home.cpp'
+    methods = '\n'.join(method(path, s) for s in ['void Home::poll()', 'void Home::abort()', 'void Home::requestAborted()'])
+    run(cxx, 'homing', '''
+#include <cassert>
+enum { HS_NONE, HS_HOMING, GU_NONE = 0, GS_NONE = 0, DIR_BOTH = 0, CE_NONE = 0 };
+using CommandError = int;
+unsigned long now = 0;
+unsigned long millis() { return now; }
+struct { bool trust = false; void requireHome() { trust = false; } bool trusted() { return trust; } } startupAuthority;
+struct Axis {
+  bool moving = false, target = true, sensed = false;
+  bool motionErrorSensed(int) { return sensed; }
+  bool atTarget() { return target; }
+  void autoSlewAbort() { target = false; }
+} axis1, axis2;
+struct { int state = 0; void abort() {} } guide, goTo;
+struct {
+  bool fault = false, syncFromOnStepToEncoders = false;
+  bool motorFault() { return fault; }
+  bool isSlewing() { return axis1.moving || axis2.moving; }
+  void tracking(bool) {}
+} mount;
+struct Home {
+  int state = HS_HOMING, resets = 0, resetResult = 0;
+  bool failed = false, offsetActive = true, abortPending = false, isRequestWithReset = false;
+  unsigned long offsetDeadline = 1000;
+  void poll(); void abort(); void requestAborted();
+  int reset(bool, bool authoritative) { ++resets; startupAuthority.trust = authoritative && !resetResult; return resetResult; }
+};
+''' + methods + '''
+int main() {
+  Home h;
+  axis1.moving = true;
+  h.poll();
+  assert(h.state == HS_HOMING && h.resets == 0 && !startupAuthority.trust);
+  axis1.moving = false;
+  h.poll();
+  assert(h.state == HS_NONE && h.resets == 1 && startupAuthority.trust);
+  h = Home{}; startupAuthority.trust = false; axis2.target = false;
+  h.poll();
+  assert(h.failed && h.resets == 0 && !startupAuthority.trust);
+  h = Home{}; axis1.target = axis2.target = true; axis1.moving = true;
+  h.abort(); h.poll();
+  assert(h.state == HS_HOMING && h.resets == 0);
+  axis1.moving = false; h.poll();
+  assert(h.failed && !startupAuthority.trust);
+  h = Home{}; now = 1000; h.poll();
+  assert(h.failed && h.resets == 0);
+  h = Home{}; now = 0; axis1.target = axis2.target = true; h.resetResult = 1;
+  h.poll(); assert(h.failed && !startupAuthority.trust);
+}
+''')
+
 def authority(cxx):
     header = source('src/telescope/mount/startupAuthority/StartupAuthority.h')
     body = source('src/telescope/mount/startupAuthority/StartupAuthority.cpp')
@@ -75,3 +140,5 @@ if __name__ == '__main__':
     parser.add_argument('--cxx', default='g++')
     args = parser.parse_args()
     authority(args.cxx)
+    if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
+        homing(args.cxx)

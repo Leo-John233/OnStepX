@@ -86,6 +86,9 @@ bool Guide::command(char *reply, char *command, char *parameter, bool *suppressF
   // :Q#        Halt all slews, stops goto
   //            Returns: Nothing
   if (command[0] == 'Q') {
+    // 停止命令覆盖传感器精找和偏置移动
+    if (home.state == HS_HOMING && parameter[0] == 0 &&
+        (command[1] == 0 || command[1] == 'e' || command[1] == 'w' || command[1] == 'n' || command[1] == 's')) home.abort();
     if (command[1] == 0) {
         #if GOTO_FEATURE == ON
           goTo.abort();

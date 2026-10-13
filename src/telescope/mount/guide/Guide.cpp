@@ -208,13 +208,15 @@ CommandError Guide::startHome() {
       guideFinishTimeAxis1 = millis() + (unsigned long)(GUIDE_HOME_TIME_LIMIT * 1000.0);
       guideActionAxis1 = GA_HOME;
       axis1.setFrequencySlew(goTo.rate);
-      axis1.autoSlewHome();
+      e = axis1.autoSlewHome();
+      if (e != CE_NONE) { abort(); return e; }
     #endif
 
     guideFinishTimeAxis2 = millis() + (unsigned long)(GUIDE_HOME_TIME_LIMIT * 1000.0);
     guideActionAxis2 = GA_HOME;
     axis2.setFrequencySlew(goTo.rate*((float)(AXIS2_SLEW_RATE_PERCENT)/100.0F));
-    axis2.autoSlewHome();
+    e = axis2.autoSlewHome();
+    if (e != CE_NONE) { abort(); return e; }
   #else
     DLF("WRN: Mount, sensed home rejected because goto is disabled");
     return CE_SLEW_ERR_UNSPECIFIED;
@@ -434,6 +436,7 @@ void Guide::spiralPoll() {
 }
 
 void Guide::poll() {
+  home.poll();
   // just return if no guide is active
   if (state == GU_NONE) return;
 
@@ -467,7 +470,11 @@ void Guide::poll() {
     if (state == GU_HOME_GUIDE) {
       VLF("MSG: Guide, arrival at home detected");
       state = GU_NONE;
-      home.guideDone(true);
+      bool success = axis2.homeSucceeded();
+      #if AXIS1_SECTOR_GEAR == ON || AXIS2_TANGENT_ARM == OFF
+        success = success && axis1.homeSucceeded();
+      #endif
+      home.guideDone(success);
     } else {
       VLF("MSG: Guide, aborted homing");
       state = GU_NONE;

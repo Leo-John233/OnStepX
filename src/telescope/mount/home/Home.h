@@ -39,6 +39,9 @@ class Home {
 
     // clear home state on abort
     void requestAborted();
+    // 中断所有回零阶段 停稳后仍保留恢复锁
+    void abort();
+    void poll();
 
     // after finding home switches displace the mount axes as specified
     void guideDone(bool success);
@@ -70,6 +73,9 @@ class Home {
     HomeState state;
 
   private:
+    bool offsetActive = false;
+    bool abortPending = false;
+    unsigned long offsetDeadline = 0;
     bool wasTracking = false;
     Coordinate position;
 

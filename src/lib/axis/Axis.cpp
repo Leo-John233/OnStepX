@@ -430,6 +430,7 @@ CommandError Axis::autoSlew(Direction direction, float frequency) {
 }
 
 CommandError Axis::autoSlewHome(unsigned long timeout) {
+  if (homingStage == HOME_NONE) homeSuccessful = false;
   if (!enabled) return CE_SLEW_ERR_IN_STANDBY;
   if (autoRate != AR_NONE) return CE_SLEW_IN_SLEW;
   if (motionError(DIR_BOTH)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
@@ -482,6 +483,7 @@ void Axis::autoSlewStop() {
 }
 
 void Axis::autoSlewAbort() {
+  if (homingStage != HOME_NONE) homeSuccessful = false;
   if (autoRate <= AR_RATE_BY_TIME_ABORT) return;
 
   motor->setSynchronized(true);
@@ -598,7 +600,7 @@ void Axis::poll() {
             VF("MSG:"); V(axisPrefix); VLF("autoSlewHome approach correction");
           }
         } else
-        if (homingStage == HOME_FINE) homingStage = HOME_NONE;
+        if (homingStage == HOME_FINE) { homingStage = HOME_NONE; homeSuccessful = true; }
         if (homingStage != HOME_NONE) {
           float f = fabs(slewFreq)/6.0F;
           if (f < 0.0003F) f = 0.0003F;
