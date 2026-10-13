@@ -156,15 +156,24 @@
 
 #define MOUNT_ENABLE_IN_STANDBY           OFF           // [少改] ON 在待机状态下启用架台电机驱动器
 
+// 回零策略与电机保持
+#define HOME_REQUIRED_ON_BOOT             ON            // ON：开机后须先 Home/Set Home 才能正常 GOTO/跟踪；
+                                                        // OFF：沿用原版启动位置假定
+#define HOME_REQUIRED_AFTER_LIMIT         ON            // ON：物理限位后须 Home/Set Home 恢复；
+                                                        // OFF：限位仍停止运动，但不强制重新回零
+#define MOTOR_HOLD_ON_BOOT                ON            // ON：开机仅使能电机保持；
+                                                        // OFF：不额外使能电机（不改变上述回零策略）
+
 // --- 回零确认 ---
-#define AXIS1_SENSE_HOME_OFFSET           -5400         // 原点传感器偏置 单位角秒
-#define AXIS2_SENSE_HOME_OFFSET           -3600         // 原点传感器偏置 单位角秒
-#define HOME_FAST_RATE                    9             // 回零快速 1 至 9 档
-#define HOME_SLOW_RATE                    7             // 回零慢速 精找再降为六分之一
-#define HOME_OFFSET_RATE                  8             // 回零偏置 1 至 9 档
-#define HOME_REQUIRED_ON_BOOT             ON            // 开机先回零或确认机械原点
-#define HOME_REQUIRED_AFTER_LIMIT         ON            // 物理限位后重新回零
-#define MOTOR_HOLD_ON_BOOT                ON            // 开机使能电机保持 不启动跟踪
+// 自动回零速度设置
+#define HOME_FAST_RATE                    9             //  1..9；8=半最大速度，9=最大速度
+#define HOME_SLOW_RATE                    7             //  1..9；推荐7=48倍恒星速度
+// 偏置零位配置
+#define HOME_OFFSET_AXIS1                 -1.5          //  n.n (度), 赤经/方位轴的偏置角度（支持正负号改变方向，0为不偏置）
+#define HOME_OFFSET_AXIS2                 1             //  n.n (度), 赤纬/俯仰轴的偏置角度（支持正负号改变方向，0为不偏置）
+#define HOME_OFFSET_RATE                  8             //  7, n. 偏置阶段使用的速度档位
+                                                        //  可选值通常为 1..9 档
+                                                        //  提示：7 = 48x 恒星速（推荐，精找速度），8 = 半最大速，9 = 全速（Goto速度）
 
 // --- 时间和位置 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#TLS

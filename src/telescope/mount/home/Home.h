@@ -9,6 +9,26 @@
 #include "../../../libApp/commands/ProcessCmds.h"
 #include "../coordinates/Transform.h"
 
+// 兼容旧配置的度数与方向 内部仍使用角秒保存
+#ifdef HOME_OFFSET_AXIS1
+  static_assert(HOME_OFFSET_AXIS1 >= -180.0 && HOME_OFFSET_AXIS1 <= 180.0, "HOME_OFFSET_AXIS1 must be within +/-180 degrees");
+  constexpr long homeOffsetAxis1 = (long)(HOME_OFFSET_AXIS1*3600.0);
+#else
+  constexpr long homeOffsetAxis1 = AXIS1_SENSE_HOME_OFFSET;
+#endif
+#ifdef HOME_OFFSET_AXIS2
+  static_assert(HOME_OFFSET_AXIS2 >= -180.0 && HOME_OFFSET_AXIS2 <= 180.0, "HOME_OFFSET_AXIS2 must be within +/-180 degrees");
+  constexpr long homeOffsetAxis2 = (long)(-HOME_OFFSET_AXIS2*3600.0);
+#else
+  constexpr long homeOffsetAxis2 = AXIS2_SENSE_HOME_OFFSET;
+#endif
+#if AXIS1_SECTOR_GEAR == ON
+  static_assert(homeOffsetAxis1 == 0, "Sector gear homing requires zero offset");
+#endif
+#if AXIS2_TANGENT_ARM == ON
+  static_assert(homeOffsetAxis2 == 0, "Tangent arm homing requires zero offset");
+#endif
+
 enum HomeState: uint8_t {HS_NONE, HS_HOMING};
 
 #pragma pack(1)
@@ -65,7 +85,7 @@ class Home {
                     (((AXIS1_SECTOR_GEAR) == ON) && ((AXIS1_SENSE_HOME) != OFF)) || \
                     (((AXIS2_TANGENT_ARM) == ON) && ((AXIS2_SENSE_HOME) != OFF));
 
-    Settings settings = {MOUNT_AUTO_HOME_DEFAULT == ON, {AXIS1_SENSE_HOME_OFFSET, false}, {AXIS2_SENSE_HOME_OFFSET, false}};
+    Settings settings = {MOUNT_AUTO_HOME_DEFAULT == ON, {homeOffsetAxis1, false}, {homeOffsetAxis2, false}};
 
     bool isRequestWithReset = false;
     bool failed = false;

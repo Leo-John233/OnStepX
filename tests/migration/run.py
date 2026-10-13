@@ -340,6 +340,37 @@ int main(){
 }
 ''', [f'-DMOUNT_HOME_AT_OFFSETS={at_offsets}'])
 
+
+def offset_config(cxx):
+    header = source('src/telescope/mount/home/Home.h')
+    prefix = '''
+#include <cassert>
+#include <cstdint>
+#define MOUNT_PRESENT
+#define ON 1
+#define OFF -1
+#define LOW 0
+#define HIGH 1
+#define AXIS1_SECTOR_GEAR OFF
+#define AXIS2_TANGENT_ARM OFF
+#define AXIS1_SENSE_HOME LOW
+#define AXIS2_SENSE_HOME HIGH
+#define AXIS1_SENSE_HOME_OFFSET 123
+#define AXIS2_SENSE_HOME_OFFSET 456
+#define MOUNT_AUTO_HOME_DEFAULT OFF
+using CommandError=int;
+enum CoordReturn { CR_MOUNT_EQU };
+struct Coordinate {};
+'''
+    for label, flags, a1, a2 in [('legacy', ['-DHOME_OFFSET_AXIS1=-1.5', '-DHOME_OFFSET_AXIS2=1'], -5400, -3600), ('native', [], 123, 456), ('zero', ['-DHOME_OFFSET_AXIS1=0', '-DHOME_OFFSET_AXIS2=0'], 0, 0)]:
+        run(cxx, 'offset_config_' + label, prefix + header + f'''
+int main() {{
+ Home h;
+ assert(h.settings.axis1.senseOffset == {a1});
+ assert(h.settings.axis2.senseOffset == {a2});
+}}
+''', flags)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cxx', default='g++')
@@ -350,5 +381,6 @@ if __name__ == '__main__':
     goto_outcomes(args.cxx)
     st4_button(args.cxx)
     home_offsets(args.cxx)
+    offset_config(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)
