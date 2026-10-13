@@ -16,8 +16,8 @@
 #define DEBUG                             VERBOSE       // [少改] 默认 OFF | ON 仅输出后台错误信息 VERBOSE 输出全部错误和状态信息
                                                         //        CONSOLE 启用 VT100 调试控制台
                                                         //        PROFILER 启用 VT100 任务分析器
-#define DEBUG_AXIS                        1             // [可选] 默认 OFF | 其中 n=1 至 9 且该轴必须已在 Config.h 中启用
-#define DEBUG_UART                        ON            // [可选] 默认 OFF | ON 每秒回读 TMC UART 通信模式 阻塞状态 IOIN 版本和驱动寄存器
+#define DEBUG_AXIS                        OFF           // [可选] 默认 OFF | 其中 n=1 至 9 且该轴必须已在 Config.h 中启用
+#define DEBUG_UART                        OFF           // [可选] 默认 OFF | ON 每秒回读 TMC UART 通信模式 阻塞状态 IOIN 版本和驱动寄存器
                                                         //        使用 DEBUG_AXIS 选择轴 首次输出一次 后续仅在状态变化时输出 使用完毕后请关闭
 #define DEBUG_SPI                         OFF           // [可选] ON 每秒回读 DEBUG_AXIS 对应 TMC SPI 轴的状态字节 DRV_STATUS 和 CHOPCONF
                                                         //        首次回读输出一次 后续仅在状态变化时输出 使用完毕后请关闭
