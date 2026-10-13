@@ -16,8 +16,7 @@ void StartupAuthority::init() {
 }
 
 void StartupAuthority::begin() {
-  homeRequired = false;
-  parkRestoreAllowed = false;
+  recovery.reset();
   trustedValue = false;
   trustEstablishedValue = false;
   commissioningAllowed = false;
@@ -25,7 +24,7 @@ void StartupAuthority::begin() {
 
 void StartupAuthority::setTrusted(bool state) {
   // 普通授权不能在恢复锁期间重建已丢失的坐标
-  if (state && homeRequired) return;
+  if (state && recovery.needsHome()) return;
   #if NV_INIT_ERROR_REVOKES_AUTHORITY == ON
     if (state && initError.nv) {
       DLF("WRN: Mount, startup authority trust rejected due to NV fault");
@@ -34,7 +33,7 @@ void StartupAuthority::setTrusted(bool state) {
   #endif
 
   trustedValue = state;
-  if (!state) parkRestoreAllowed = false;
+  if (!state) recovery.revokeParkRestore();
   if (state) {
     trustEstablishedValue = true;
     commissioningAllowed = false;
@@ -47,20 +46,18 @@ void StartupAuthority::setTrusted(bool state) {
 
 // 停止跟踪并锁定自动运动 手动退出仍由限位检查约束
 void StartupAuthority::requireHome(bool coordinatesKnown, bool allowParkRestore) {
-  parkRestoreAllowed = allowParkRestore && trusted();
+  recovery.requireHome(allowParkRestore && trusted());
   if (!coordinatesKnown) trustedValue = false;
-  homeRequired = true;
   limits.enabled(false);
   mount.tracking(false);
 }
 
 // 确认原点或有效泊车坐标后解除恢复锁 NV 故障仍可拒绝授权
 void StartupAuthority::completeHome() {
-  parkRestoreAllowed = false;
-  homeRequired = false;
+  recovery.reset();
   trustedValue = false;
   setTrusted(true);
-  if (!trustedValue) homeRequired = true;
+  recovery.complete(trustedValue);
 }
 
 bool StartupAuthority::required() const {
@@ -72,7 +69,7 @@ bool StartupAuthority::required() const {
 }
 
 CommandError StartupAuthority::validateManualMotion() const {
-  if (homeRequired) return CE_NONE;
+  if (recovery.needsHome()) return CE_NONE;
   if (!required()) return CE_NONE;
 
   // Commissioning mode: on first boot/fresh NV there may be no trusted

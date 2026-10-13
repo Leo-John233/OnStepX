@@ -87,7 +87,7 @@ int main() {
 ''')
 
 def authority(cxx):
-    header = source('src/telescope/mount/startupAuthority/StartupAuthority.h')
+    header = source('src/telescope/mount/startupAuthority/RecoveryPolicy.h') + source('src/telescope/mount/startupAuthority/StartupAuthority.h')
     body = source('src/telescope/mount/startupAuthority/StartupAuthority.cpp')
     run(cxx, 'authority', '''
 #include <cassert>

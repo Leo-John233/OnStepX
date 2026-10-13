@@ -7,19 +7,20 @@
 #ifdef MOUNT_PRESENT
 
 #include "../../../libApp/commands/ProcessCmds.h"
+#include "RecoveryPolicy.h"
 
 class StartupAuthority {
   public:
     void init();
     void begin();
 
-    inline bool trusted() const { return trustedValue && !homeRequired; }
+    inline bool trusted() const { return recovery.allowsMotion(trustedValue); }
     // 恢复锁期间仅允许已知坐标返回原点
-    inline bool needsHome() const { return homeRequired; }
-    inline bool canReturnHome() const { return trustedValue && homeRequired; }
+    inline bool needsHome() const { return recovery.needsHome(); }
+    inline bool canReturnHome() const { return recovery.canReturnHome(trustedValue); }
     void requireHome(bool coordinatesKnown = false, bool allowParkRestore = false);
     // 仅开机时已验证的泊车记录可用于恢复
-    inline bool canRestorePark() const { return parkRestoreAllowed; }
+    inline bool canRestorePark() const { return recovery.canRestorePark(); }
     void completeHome();
     bool required() const;
     CommandError validateManualMotion() const;
@@ -36,8 +37,7 @@ class StartupAuthority {
     bool commissioningAllowed = false;
     bool trustEstablishedValue = false;
     bool trustedValue = false;
-    bool homeRequired = false;
-    bool parkRestoreAllowed = false;
+    RecoveryPolicy recovery;
 };
 
 extern StartupAuthority startupAuthority;
