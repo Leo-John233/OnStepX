@@ -222,6 +222,11 @@ void Mount::begin() {
     startupAuthority.requireHome(!home.hasSense && startupAuthority.trusted());
   #endif
 
+  // 开机保持独立于回零授权 使用驱动器已有静止电流策略
+  #if MOTOR_HOLD_ON_BOOT == ON
+    enable(true);
+  #endif
+
   VF("MSG: Mount, start tracking monitor task (rate 1000ms priority 6)... ");
   if (tasks.add(1000, 0, true, 6, mountWrapper, "MtTrack")) { VLF("success"); } else { VLF("FAILED!"); }
 

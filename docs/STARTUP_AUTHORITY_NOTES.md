@@ -3,6 +3,8 @@
 ## 本地迁移补充
 
 - HOME_REQUIRED_ON_BOOT 要求开机后确认原点
+- MOTOR_HOLD_ON_BOOT 仅在开机使能电机 不开启跟踪 不确认位置
+- MOUNT_ENABLE_IN_STANDBY 继续控制复位后的待机使能 两者互不替代
 - HOME_REQUIRED_AFTER_LIMIT 由物理限位模块触发恢复锁
 - 恢复锁期间禁止普通 GOTO Sync 和开启跟踪
 - 无传感器且坐标仍可信时仅允许返回原点

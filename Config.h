@@ -157,6 +157,7 @@
 // --- 回零确认 ---
 #define HOME_REQUIRED_ON_BOOT             ON            // 开机先回零或确认机械原点
 #define HOME_REQUIRED_AFTER_LIMIT         ON            // 物理限位后重新回零
+#define MOTOR_HOLD_ON_BOOT                ON            // 开机使能电机保持 不启动跟踪
 
 // --- 时间和位置 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#TLS

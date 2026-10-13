@@ -651,6 +651,9 @@
 #ifndef HOME_REQUIRED_AFTER_LIMIT
 #define HOME_REQUIRED_AFTER_LIMIT    OFF                         // 物理限位后要求重新回零
 #endif
+#ifndef MOTOR_HOLD_ON_BOOT
+#define MOTOR_HOLD_ON_BOOT           OFF                         // 开机使能电机保持
+#endif
 
 #ifndef MOUNT_ENABLE_IN_STANDBY
 #define MOUNT_ENABLE_IN_STANDBY       OFF                         // ON Enables mount motor drivers in standby
