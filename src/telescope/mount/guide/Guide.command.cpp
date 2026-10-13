@@ -2,6 +2,7 @@
 // telescope mount control, commands
 
 #include "Guide.h"
+#include "../home/Home.h"
 
 #ifdef MOUNT_PRESENT
 
