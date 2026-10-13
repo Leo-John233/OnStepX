@@ -15,7 +15,6 @@
 #include "../goto/Goto.h"
 #include "../home/Home.h"
 #include "../park/Park.h"
-#include "../home/Home.h"
 #include "../limits/Limits.h"
 #include "../startupAuthority/StartupAuthority.h"
 #include "../status/Status.h"
@@ -47,7 +46,7 @@ void Guide::init() {
 CommandError Guide::startAxis1(GuideAction guideAction, GuideRateSelect rateSelect, unsigned long guideTimeLimit, bool pulseGuide) {
   if (guideAction == GA_NONE) return CE_NONE;
   if (state == GU_HOME_GUIDE || state == GU_HOME_GUIDE_ABORT) return CE_NONE;
-  if (pulseGuide && !limits.isEnabled()) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+  if (pulseGuide && (!limits.isEnabled() || !axis1.physicalLimitReady() || !axis2.physicalLimitReady())) return CE_SLEW_ERR_OUTSIDE_LIMITS;
 
   CommandError e = validate(1, guideAction);
   if (e != CE_NONE) return e;
@@ -63,7 +62,7 @@ CommandError Guide::startAxis1(GuideAction guideAction, GuideRateSelect rateSele
     axis2.setPowerDownOverrideTime(300000UL);
   }
 
-  if (limits.isEnabled() && rate <= 2 && (pulseGuide || rateSelect != GR_CUSTOM)) {
+  if (limits.isEnabled() && axis1.physicalLimitReady() && rate <= 2 && (pulseGuide || rateSelect != GR_CUSTOM)) {
     backlashEnableControl(false);
     state = GU_PULSE_GUIDE;
     if (guideAction == GA_REVERSE) { VF("MSG: Guide, Axis1 rev @"); rateAxis1 = -rate; } else { VF("MSG: Guide, Axis1 fwd @"); rateAxis1 = rate; }
@@ -105,7 +104,7 @@ void Guide::stopAxis1(GuideAction stopDirection, bool abort) {
 CommandError Guide::startAxis2(GuideAction guideAction, GuideRateSelect rateSelect, unsigned long guideTimeLimit, bool pulseGuide) {
   if (guideAction == GA_NONE) return CE_NONE;
   if (state == GU_HOME_GUIDE || state == GU_HOME_GUIDE_ABORT) return CE_NONE;
-  if (pulseGuide && !limits.isEnabled()) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+  if (pulseGuide && (!limits.isEnabled() || !axis1.physicalLimitReady() || !axis2.physicalLimitReady())) return CE_SLEW_ERR_OUTSIDE_LIMITS;
 
   CommandError e = validate(2, guideAction); // if successful always sets pierSide
   if (e != CE_NONE) return e;
@@ -123,7 +122,7 @@ CommandError Guide::startAxis2(GuideAction guideAction, GuideRateSelect rateSele
     axis2.setPowerDownOverrideTime(300000UL);
   }
 
-  if (limits.isEnabled() && rate <= 2 && (pulseGuide || rateSelect != GR_CUSTOM)) {
+  if (limits.isEnabled() && axis2.physicalLimitReady() && rate <= 2 && (pulseGuide || rateSelect != GR_CUSTOM)) {
     state = GU_PULSE_GUIDE;
     backlashEnableControl(false);
     if (pierSide == PIER_SIDE_WEST) { if (guideAction == GA_FORWARD) guideAction = GA_REVERSE; else guideAction = GA_FORWARD; };
@@ -366,8 +365,10 @@ CommandError Guide::validate(int axis, GuideAction guideAction) {
   if (axis == 1 || guideAction == GA_SPIRAL) {
     Direction direction = guideAction == GA_FORWARD ? DIR_FORWARD : guideAction == GA_REVERSE ? DIR_REVERSE : DIR_BOTH;
     if (axis1.physicalLimitBlocked(direction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-    if (!validAxis1(guideAction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-    if (settings.axis1RateSelect < 3 && !startupAuthority.needsHome()) {
+    // 脱困由本轴限位方向决定 不依赖回零锁或失真的软件坐标
+    const bool escaping = !axis1.physicalLimitReady();
+    if (!escaping && !validAxis1(guideAction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+    if (settings.axis1RateSelect < 3 && !startupAuthority.needsHome() && !escaping) {
       if (limits.isError() || axis1.motionError(DIR_BOTH)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
     }
   }
@@ -377,8 +378,11 @@ CommandError Guide::validate(int axis, GuideAction guideAction) {
     if (mount.getMountPosition(CR_MOUNT).pierSide == PIER_SIDE_WEST && direction != DIR_BOTH)
       direction = direction == DIR_FORWARD ? DIR_REVERSE : DIR_FORWARD;
     if (axis2.physicalLimitBlocked(direction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-    if (!validAxis2(guideAction)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-    if (settings.axis2RateSelect < 3 && !startupAuthority.needsHome()) {
+    const bool escaping = !axis2.physicalLimitReady();
+    // 仍更新导星方向使用的镜筒侧状态
+    const bool valid = validAxis2(guideAction);
+    if (!escaping && !valid) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+    if (settings.axis2RateSelect < 3 && !startupAuthority.needsHome() && !escaping) {
       if (limits.isError() || axis2.motionError(DIR_BOTH)) return CE_SLEW_ERR_OUTSIDE_LIMITS;
     }
   }

@@ -85,3 +85,57 @@ int main(){
 }
 '''
         run(cxx, 'alignment_' + auto.lower(), prefix + body + test, ['-DALIGN_AUTO_HOME=' + auto])
+
+
+def escape(cxx):
+    path = 'src/telescope/mount/guide/Guide.cpp'
+    body = '\n'.join(method(path, sig) for sig in ['CommandError Guide::validate(', 'CommandError Guide::startAxis1(', 'CommandError Guide::startAxis2('])
+    prefix = r"""
+#include <cassert>
+#define ON 1
+#define GOTO_FEATURE ON
+#define AXIS2_SLEW_RATE_PERCENT 100
+#define DLF(x)
+#define VF(x)
+#define V(x)
+#define VL(x)
+using CommandError=int;using GuideAction=int;using GuideRateSelect=int;
+enum Direction{DIR_FORWARD,DIR_REVERSE,DIR_BOTH};
+enum{CE_NONE,CE_SLEW_ERR_OUTSIDE_LIMITS,CE_SLEW_IN_MOTION,CE_SLEW_ERR_IN_STANDBY,CE_SLEW_ERR_IN_PARK,CE_SLEW_ERR_HARDWARE_FAULT};
+enum{GA_NONE,GA_FORWARD,GA_REVERSE,GA_SPIRAL,GA_HOME,GR_CUSTOM=10,GR_MAX=9};
+enum{GU_NONE,GU_HOME_GUIDE,GU_HOME_GUIDE_ABORT,GU_GUIDE,GU_PULSE_GUIDE,HS_HOMING=1,PS_PARKED=1,GS_NONE=0,PIER_SIDE_WEST=1,CR_MOUNT=0};
+float degToRadF(float x){return x;}unsigned long millis(){return 0;}
+struct{int state=0;}home,park;
+struct{int state=0;void abort(){}}goTo;
+struct{bool on=true,error=true;bool isEnabled(){return on;}bool isError(){return error;}}limits;
+struct{bool locked=false;bool needsHome(){return locked;}int validateManualMotion(){return CE_NONE;}}startupAuthority;
+struct Axis{bool ready=false;Direction allowed=DIR_REVERSE;int slews=0;bool physicalLimitReady(){return ready;}
+ bool physicalLimitBlocked(Direction d){return !ready&&d!=allowed;}bool motionError(Direction){return !ready;}
+ void setPowerDownOverrideTime(unsigned long){}void setFrequencySlew(float){}}axis1,axis2;
+struct{int side=0;bool fault=false;float trackingRateAxis1=0,trackingRateAxis2=0;
+ bool isEnabled(){return true;}void enable(bool){}bool isSlewing(){return false;}bool motorFault(){return fault;}
+ struct Position{int pierSide;};Position getMountPosition(int){return {side};}void update(){}}mount;
+struct{void wake(){}}mountStatus;
+struct Guide{int state=GU_NONE,pierSide=0,guideActionAxis1=0,guideActionAxis2=0;float rateAxis1=0,rateAxis2=0;unsigned long guideFinishTimeAxis1=0,guideFinishTimeAxis2=0;
+ struct{int axis1RateSelect=0,axis2RateSelect=0;}settings;
+ bool validAxis1(int){return false;}bool validAxis2(int){pierSide=mount.side;return false;}
+ int validate(int,int);int startAxis1(int,int,unsigned long,bool);int startAxis2(int,int,unsigned long,bool);
+ float rateSelectToRate(int,int){return 1;}void finalizeTimeLimit(unsigned long&){}void backlashEnableControl(bool){}
+ void axis1AutoSlew(int){++axis1.slews;}void axis2AutoSlew(int){++axis2.slews;}
+};
+"""
+    run(cxx, 'independent_escape', prefix + body + r"""
+int main(){
+ Guide g;
+ assert(g.startAxis1(GA_REVERSE,0,1000,false)==CE_NONE&&axis1.slews==1&&g.state==GU_GUIDE);
+ assert(g.startAxis1(GA_FORWARD,0,1000,false)==CE_SLEW_ERR_OUTSIDE_LIMITS);
+ assert(g.startAxis1(GA_REVERSE,0,1000,true)==CE_SLEW_ERR_OUTSIDE_LIMITS);
+ assert(g.startAxis2(GA_REVERSE,0,1000,false)==CE_NONE&&axis2.slews==1&&g.state==GU_GUIDE);
+ mount.side=PIER_SIDE_WEST;
+ assert(g.startAxis2(GA_FORWARD,0,1000,false)==CE_NONE&&axis2.slews==2);
+ assert(g.startAxis2(GA_REVERSE,0,1000,false)==CE_SLEW_ERR_OUTSIDE_LIMITS);
+ axis1.allowed=DIR_BOTH;assert(g.startAxis1(GA_REVERSE,0,1000,false)==CE_SLEW_ERR_OUTSIDE_LIMITS);
+ axis1.allowed=DIR_REVERSE;mount.fault=true;assert(g.startAxis1(GA_REVERSE,0,1000,false)==CE_SLEW_ERR_HARDWARE_FAULT);
+ mount.fault=false;startupAuthority.locked=true;assert(g.startAxis1(GA_REVERSE,0,1000,false)==CE_NONE);
+}
+""")
