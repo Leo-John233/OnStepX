@@ -1,13 +1,14 @@
 // -------------------------------------------------------------------------------------------------
-// Validate configuration
+// 配置校验
+// 编译时检查参数范围与功能兼容性 错误和警告保留原始提示
 #pragma once
 #include "Common.h"
 
-#if !defined(FileVersionConfig) || FileVersionConfig != 6 // per FirmwareVersionConfig
+#if !defined(FileVersionConfig) || FileVersionConfig != 6  // 与 FirmwareVersionConfig 一致
   #error "Configuration (Config.h): FileVersionConfig (Config.h version) must be 6 for this OnStep."
 #endif
 
-// BACKWARDS COMPATABILITY ------------------------
+// 旧版配置兼容
 #ifdef AXIS3_SLEW_RATE_DESIRED
   #warning "Configuration (Config.h): AXIS3_SLEW_RATE_DESIRED has been replaced with AXIS3_SLEW_RATE_BASE_DESIRED please update"
   #define AXIS3_SLEW_RATE_BASE_DESIRED AXIS3_SLEW_RATE_DESIRED
@@ -21,12 +22,12 @@
   #define AXIS5_SLEW_RATE_BASE_DESIRED AXIS5_SLEW_RATE_DESIRED
 #endif
 
-// GENERAL ---------------------------------------
+// 通用校验
 #if defined(STEP_DIR_TMC_UART_PRESENT) && (!defined(SERIAL_TMC) || !defined(SERIAL_TMC_BAUD))
   #error "Configuration (Config.h): This PINMAP doesn't support TMC UART mode drivers"
 #endif
 
-// TELESCOPE -------------------------------------
+// 望远镜配置
 #if PINMAP != OFF && (PINMAP < PINMAP_FIRST || PINMAP > PINMAP_LAST)
   #error "Configuration (Config.h): PINMAP must be set to a valid board (from Constants.h) or OFF (for user pin defs in Config.h)"
 #endif
@@ -101,14 +102,14 @@
   #error "Configuration (Config.h): Setting STEP_WAVE_FORM SQUARE is required for the Teensy4.0 and 4.1"
 #endif
 
-// MOUNT -----------------------------------------
+// 架台配置
 
 #if (AXIS1_DRIVER_MODEL != OFF && AXIS2_DRIVER_MODEL == OFF) || \
     (AXIS1_DRIVER_MODEL == OFF && AXIS2_DRIVER_MODEL != OFF)
   #error "Configuration (Config.h): Settings AXIS1_DRIVER_MODEL and AXIS2_DRIVER_MODEL must both be OFF or set to a valid DRIVER (from Constants.h)"
 #endif
 
-// AXIS1 RA/AZM
+// 轴 1 赤经或方位
 #if AXIS1_DRIVER_MODEL != OFF && \
     (AXIS1_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS1_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS1_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS1_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -216,7 +217,7 @@
   #error "Configuration (Config.h): Setting AXIS1_SENSE_LIMIT_MAX unknown, use OFF or HIGH/LOW and HYST() and/or THLD() as described in comments."
 #endif
 
-// AXIS2 DEC/ALT
+// 轴 2 赤纬或高度
 #if AXIS2_DRIVER_MODEL != OFF && \
     (AXIS2_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS2_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS2_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS2_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -379,6 +380,7 @@
   #error "Configuration (Config.h): Setting MOUNT_ENABLE_IN_STANDBY unknown, use ON or OFF"
 #endif
 
+// 回零按钮与速度档位
 #if ST4_HOME_BUTTON != ON && ST4_HOME_BUTTON != OFF
   #error "ST4_HOME_BUTTON must be ON or OFF"
 #endif
@@ -390,6 +392,7 @@
   #error "HOME_SLOW_RATE must be OFF or 1 through HOME_FAST_RATE"
 #endif
 
+// 回零恢复策略与开机电机保持
 #if (HOME_REQUIRED_ON_BOOT != ON && HOME_REQUIRED_ON_BOOT != OFF) || (HOME_REQUIRED_AFTER_LIMIT != ON && HOME_REQUIRED_AFTER_LIMIT != OFF)
   #error "HOME_REQUIRED_ON_BOOT and HOME_REQUIRED_AFTER_LIMIT must be ON or OFF"
 #endif
@@ -401,7 +404,7 @@
   #error "Configuration (Config.h): Setting ALIGN_MAX_STARS unknown, use AUTO or a value from 1 to 9."
 #endif
 
-// TIME AND LOCATION
+// 时间与位置
 #if TIME_LOCATION_SOURCE < TLS_FIRST && TIME_LOCATION_SOURCE > TLS_LAST
   #error "Configuration (Config.h): Setting TIME_LOCATION_SOURCE unknown, use OFF or valid TIME LOCATION SOURCE (from Constants.h)"
 #endif
@@ -421,7 +424,7 @@
   #error "Configuration (Config.h): Setting TIME_LOCATION_PPS_SENSE unknown, use OFF or LOW or HIGH or BOTH."
 #endif
 
-// USER FEEDBACK
+// 状态提示
 #if STATUS_MOUNT_LED != ON && STATUS_MOUNT_LED != OFF
   #error "Configuration (Config.h): Setting STATUS_MOUNT_LED unknown, use OFF or ON."
 #endif
@@ -438,7 +441,7 @@
   #error "Configuration (Config.h): Setting STATUS_BUZZER_MEMORY unknown, use OFF or ON."
 #endif
 
-// ST4 INTERFACE
+// ST4 接口
 #if ST4_INTERFACE != ON && ST4_INTERFACE != OFF
   #error "Configuration (Config.h): Setting ST4_INTERFACE unknown, use OFF or ON."
 #endif
@@ -451,7 +454,7 @@
   #error "Configuration (Config.h): Setting ST4_HAND_CONTROL_FOCUSER unknown, use OFF or ON."
 #endif
 
-// GUIDING
+// 导星设置
 #if GUIDE_TIME_LIMIT < 0 || GUIDE_TIME_LIMIT > 120
   #error "Configuration (Config.h): Setting GUIDE_TIME_LIMIT unknown, use the value 0 to disable or 1 to 120 (seconds.)"
 #endif
@@ -468,12 +471,12 @@
   #error "Configuration (Config.h): Setting GUIDE_SEPARATE_PULSE_RATE unknown, use OFF or ON."
 #endif
 
-// SENSORS
+// 传感器设置
 #if (LIMIT_SENSE) != OFF && (LIMIT_SENSE) < 0
   #error "Configuration (Config.h): Setting LIMIT_SENSE unknown, use OFF or HIGH/LOW and HYST() and/or THLD() as described in comments."
 #endif
 
-// PEC (max steps per degree 360000 * 360 degrees)
+// PEC 每度最多 360000 步 总范围 360 度
 #if PEC_STEPS_PER_WORM_ROTATION < 0 || PEC_STEPS_PER_WORM_ROTATION > 129600000
   #error "Configuration (Config.h): Setting PEC_STEPS_PER_WORM_ROTATION unknown, use the value 0 to disable or 1 to 129600000 (steps.)"
 #endif
@@ -486,7 +489,7 @@
   #error "Configuration (Config.h): Setting PEC_BUFFER_SIZE_LIMIT unknown, use the value 0 to disable or 61 to 30000 (seconds.)"
 #endif
 
-// SLEWING BEHAVIOUR
+// 快速移动行为
 #if GOTO_FEATURE != ON && GOTO_FEATURE != OFF
   #error "Configuration (Config.h): Setting GOTO_FEATURE unknown, use OFF or ON."
 #endif
@@ -495,7 +498,7 @@
   #error "Configuration (Config.h): Setting SLEW_RATE_MEMORY unknown, use OFF or ON."
 #endif
 
-// TRACKING BEHAVIOUR
+// 跟踪行为
 #if TRACK_AUTOSTART != ON && TRACK_AUTOSTART != OFF
   #error "Configuration (Config.h): Setting TRACK_AUTOSTART unknown, use OFF or ON."
 #endif
@@ -512,7 +515,7 @@
   #error "Configuration (Config.h): Setting TRACK_BACKLASH_RATE unknown, use a value between 2 and 100 (x Sidereal.)"
 #endif
 
-// GOTO_FEATURE CHECKS
+// GOTO 功能校验
 #if GOTO_FEATURE == OFF && TRACK_BACKLASH_RATE > 20
   #error "Configuration (Config.h): Setting TRACK_BACKLASH_RATE must be <= 20 when GOTO_FEATURE is OFF."
 #endif
@@ -525,7 +528,7 @@
   #error "Configuration (Config.h): Setting FORK_TA/FORK_TAC not available when GOTO_FEATURE is OFF."
 #endif
 
-// PIER SIDE BEHAVIOUR
+// 镜筒侧向行为
 #ifdef MFLIP_SKIP_HOME
   #if MFLIP_SKIP_HOME != ON && MFLIP_SKIP_HOME != OFF
     #error "Configuration (Config.h): Legacy setting MFLIP_SKIP_HOME unknown, use OFF or ON."
@@ -595,7 +598,7 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #error "Configuration (Config.h): Setting PIER_SIDE_PREFERRED_MEMORY unknown, use ON or OFF."
 #endif
 
-// PARKING BEHAVIOUR
+// 泊车行为
 #ifdef PARK_STRICT
   #if PARK_STRICT == ON
     #error "Configuration (Config.h): PARK_STRICT is obsolete. Remove it and use the startup authority / parking policy defaults instead."
@@ -606,9 +609,9 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #error "Configuration (Config.h): LIMIT_STRICT is obsolete. Remove it; startup authority now controls when limits can be enabled."
 #endif
 
-// ROTATOR ---------------------------------------
+// 旋转器配置
 
-// AXIS3 ROTATOR
+// 轴 3 旋转器
 #if AXIS3_DRIVER_MODEL != OFF && \
     (AXIS3_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS3_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS3_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS3_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -701,9 +704,9 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #error "Configuration (Config.h): Setting AXIS3_SENSE_LIMIT_MAX unknown, use OFF or HIGH/LOW and HYST() and/or THLD() as described in comments."
 #endif
 
-// FOCUSER ---------------------------------------
+// 调焦器配置
 
-// AXIS4 FOCUSER
+// 轴 4 调焦器
 #if AXIS4_DRIVER_MODEL != OFF && \
     (AXIS4_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS4_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS4_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS4_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -812,7 +815,7 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #endif
 #endif
 
-// AXIS5 FOCUSER
+// 轴 5 调焦器
 #if AXIS5_DRIVER_MODEL != OFF && \
     (AXIS5_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS5_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS5_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS5_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -921,7 +924,7 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #endif
 #endif
 
-// AXIS6 FOCUSER
+// 轴 6 调焦器
 #if AXIS6_DRIVER_MODEL != OFF && \
     (AXIS6_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS6_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS6_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS6_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -1027,7 +1030,7 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #endif
 #endif
 
-// AXIS7 FOCUSER
+// 轴 7 调焦器
 #if AXIS7_DRIVER_MODEL != OFF && \
     (AXIS7_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS7_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS7_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS7_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -1133,7 +1136,7 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #endif
 #endif
 
-// AXIS8 FOCUSER
+// 轴 8 调焦器
 #if AXIS8_DRIVER_MODEL != OFF && \
     (AXIS8_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS8_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS8_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS8_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -1239,7 +1242,7 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #endif
 #endif
 
-// AXIS9 FOCUSER
+// 轴 9 调焦器
 #if AXIS9_DRIVER_MODEL != OFF && \
     (AXIS9_DRIVER_MODEL < STEP_DIR_DRIVER_FIRST || AXIS9_DRIVER_MODEL > STEP_DIR_DRIVER_LAST) && \
     (AXIS9_DRIVER_MODEL < SERVO_DRIVER_FIRST || AXIS9_DRIVER_MODEL > SERVO_DRIVER_LAST) && \
@@ -1345,12 +1348,12 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #endif
 #endif
 
-// GENERAL TEMPERATURE ---------------------------
+// 通用温度设置
 #if defined(DS1820_DEVICES_PRESENT) && defined(THERMISTOR_DEVICES_PRESENT)
   #error "Configuration (Config.h): Setting DS18B20 devices and THERMISTOR devices can not both be used at the same time, use one or the other"
 #endif
 
-// FOCUSER TEMPERATURE ---------------------------
+// 调焦温度设置
 #if FOCUSER_TEMPERATURE != OFF && \
     (FOCUSER_TEMPERATURE & DS_MASK) != DS18B20 && \
     (FOCUSER_TEMPERATURE & DS_MASK) != DS18S20 && \
@@ -1358,7 +1361,7 @@ static_assert(AXIS2_LIMIT_SYNC == OFF || (AXIS2_LIMIT_SYNC >= 0 && AXIS2_LIMIT_S
   #error "Configuration (Config.h): Setting FOCUSER_TEMPERATURE unknown, use OFF or TEMPERATURE device (from Constants.h)"
 #endif
 
-// AUXILIARY FEATURE -----------------------------
+// 辅助功能配置
 
 #if FEATURE1_PURPOSE != OFF && (FEATURE1_PURPOSE < AUX_FEATURE_PURPOSE_FIRST || FEATURE1_PURPOSE > AUX_FEATURE_PURPOSE_LAST)
   #error "Configuration (Config.h): Setting FEATURE1_PURPOSE unknown, use OFF or AUXILIARY FEATURE purpose (from Constants.h)"
