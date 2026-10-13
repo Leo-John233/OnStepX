@@ -20,7 +20,8 @@
   #define SERIAL_TMC_ADDRESS_MAP(x) (0) // driver addresses are 0 for all axes
 #endif
 
-#if SERIAL_TMC == SoftSerial
+#if defined(STEP_DIR_TMC_UART_PRESENT) && SERIAL_TMC == SoftSerial
+  // 仅软件 UART 驱动需要串口库 纯 SPI 不加载
   #include <SoftwareSerial.h> // must be built into the board libraries
 #endif
 
