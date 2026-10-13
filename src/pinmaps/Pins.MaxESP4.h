@@ -4,6 +4,91 @@
 
 #if defined(ESP32)
 
+// SPI 使用定制主板接线 UART 保留原 MaxESP4 接线
+#if defined(STEP_DIR_TMC_SPI_PRESENT)
+// 定制 MaxESP4 SPI 接线 对应 2026-10-13 原理图
+
+#if defined(STEP_DIR_TMC_UART_PRESENT) || defined(SERVO_TMC2209_PRESENT)
+  #error "MaxESP4 SPI wiring does not support mixed SPI/UART drivers"
+#endif
+
+#if SERIAL_A_BAUD_DEFAULT != OFF
+  #define SERIAL_A               Serial
+#endif
+#if SERIAL_B_BAUD_DEFAULT != OFF
+  #define SERIAL_B               Serial2
+  #define SERIAL_B_RX            16
+  #define SERIAL_B_TX            17
+#endif
+
+// GPIO21 为 SDA GPIO22 为 SCL
+#define AUX2_PIN                 2               // SPI MISO
+#define AUX3_PIN                 25              // 赤经原点
+#define AUX4_PIN                 15              // 赤纬原点
+#define AUX5_PIN                 1               // USB 串口发送
+#define AUX6_PIN                 3               // USB 串口接收
+#define AUX7_PIN                 39              // 赤纬限位
+#define AUX8_PIN                 12              // 状态灯
+
+// 图纸未连接这些功能 避免占用限位和状态灯
+#define ONE_WIRE_PIN             OFF
+#define PEC_SENSE_PIN            OFF
+#define PPS_SENSE_PIN            OFF
+#define RETICLE_LED_PIN          OFF
+#define STATUS_BUZZER_PIN        OFF
+#define LIMIT_SENSE_PIN          OFF
+
+// 状态灯接电源 低电平点亮
+#undef STATUS_LED_ON_STATE
+#define STATUS_LED_ON_STATE      LOW
+#define STATUS_LED_PIN           12
+#undef MOUNT_LED_ON_STATE
+#define MOUNT_LED_ON_STATE       LOW
+#define MOUNT_LED_PIN            STATUS_LED_PIN
+
+// 两轴共用使能和 SPI 总线 片选独立
+#define SHARED_ENABLE_PIN        4
+#define AXIS1_ENABLE_PIN         SHARED
+#define AXIS1_M0_PIN             13              // MOSI
+#define AXIS1_M1_PIN             14              // SCK
+#define AXIS1_M2_PIN             23              // 赤经片选
+#define AXIS1_M3_PIN             2               // MISO
+#define AXIS1_STEP_PIN           18
+#define AXIS1_DIR_PIN            19
+#define AXIS1_SENSE_HOME_PIN     25
+#define AXIS1_SENSE_LIMIT_MIN_PIN 36             // 赤经两端共用输入 外部上拉
+#define AXIS1_SENSE_LIMIT_MAX_PIN 36
+
+#define AXIS2_ENABLE_PIN         SHARED
+#define AXIS2_M0_PIN             13              // MOSI
+#define AXIS2_M1_PIN             14              // SCK
+#define AXIS2_M2_PIN             5               // 赤纬片选
+#define AXIS2_M3_PIN             2               // MISO
+#define AXIS2_STEP_PIN           27
+#define AXIS2_DIR_PIN            26
+#define AXIS2_SENSE_HOME_PIN     15
+#define AXIS2_SENSE_LIMIT_MIN_PIN 39             // 赤纬两端共用输入 外部上拉
+#define AXIS2_SENSE_LIMIT_MAX_PIN 39
+#define AXIS2_ENCODER_B_PIN      OFF
+
+// 原理图只连接两轴 其余轴不分配输出
+#define AXIS3_ENABLE_PIN         OFF
+#define AXIS3_STEP_PIN           OFF
+#define AXIS3_DIR_PIN            OFF
+#define AXIS4_ENABLE_PIN         OFF
+#define AXIS4_STEP_PIN           OFF
+#define AXIS4_DIR_PIN            OFF
+#define AXIS5_ENABLE_PIN         OFF
+#define AXIS5_STEP_PIN           OFF
+#define AXIS5_DIR_PIN            OFF
+
+// 原点按钮通过二极管同时拉低赤经正反向输入
+#define ST4_RA_W_PIN             34
+#define ST4_DEC_S_PIN            32
+#define ST4_DEC_N_PIN            33
+#define ST4_RA_E_PIN             35
+#else
+
 // Serial0 接收 GPIO3 发送 GPIO1 连接 USB 串口适配器
 // Serial1 接收 GPIO10 发送 GPIO9 与 SPI Flash 共用引脚 使用前需改接
 // Serial2 接收 GPIO16 发送 GPIO17
@@ -146,6 +231,8 @@
 #define ST4_DEC_S_PIN           32               // ST4 赤纬负向 南
 #define ST4_DEC_N_PIN           33               // ST4 赤纬正向 北
 #define ST4_RA_E_PIN            35               // ST4 赤经正向 东 GPIO35 仅可输入
+
+#endif
 
 #else
 #error "Wrong processor for this configuration!"

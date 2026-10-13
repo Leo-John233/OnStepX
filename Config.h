@@ -59,7 +59,7 @@
 
 // --- 轴1 赤经或方位 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Axes
-#define AXIS1_DRIVER_MODEL                TMC2209       // [常用] 在两个轴中填写上方列出的电机驱动器型号以启用架台 默认 OFF
+#define AXIS1_DRIVER_MODEL                TMC5160       // [常用] 在两个轴中填写上方列出的电机驱动器型号以启用架台 默认 OFF
 
 // 如果已启用轴运行时设置 则会忽略下方配置 可在 SWS 中禁用或清除 NV/EEPROM
 // 运行时设置覆盖范围 开始
@@ -96,7 +96,7 @@
 
 // --- 轴2 赤纬或高度 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Axes
-#define AXIS2_DRIVER_MODEL                TMC2209       // [常用] 在两个轴中填写上方列出的电机驱动器型号以启用架台 默认 OFF
+#define AXIS2_DRIVER_MODEL                TMC5160       // [常用] 在两个轴中填写上方列出的电机驱动器型号以启用架台 默认 OFF
 
 // 如果已启用轴运行时设置 则会忽略下方配置 可在 SWS 中禁用或清除 NV/EEPROM
 // 运行时设置覆盖范围 开始
