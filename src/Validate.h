@@ -379,6 +379,13 @@
   #error "Configuration (Config.h): Setting MOUNT_ENABLE_IN_STANDBY unknown, use ON or OFF"
 #endif
 
+#if HOME_FAST_RATE < 1 || HOME_FAST_RATE > 9 || HOME_OFFSET_RATE < 1 || HOME_OFFSET_RATE > 9
+  #error "HOME_FAST_RATE and HOME_OFFSET_RATE must be 1 through 9"
+#endif
+#if HOME_SLOW_RATE != OFF && (HOME_SLOW_RATE < 1 || HOME_SLOW_RATE > HOME_FAST_RATE)
+  #error "HOME_SLOW_RATE must be OFF or 1 through HOME_FAST_RATE"
+#endif
+
 #if (HOME_REQUIRED_ON_BOOT != ON && HOME_REQUIRED_ON_BOOT != OFF) || (HOME_REQUIRED_AFTER_LIMIT != ON && HOME_REQUIRED_AFTER_LIMIT != OFF)
   #error "HOME_REQUIRED_ON_BOOT and HOME_REQUIRED_AFTER_LIMIT must be ON or OFF"
 #endif

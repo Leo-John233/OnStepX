@@ -224,8 +224,8 @@ void Home::guideDone(bool success) {
         axis2.setTargetCoordinate(a2);
         offsetActive = true;
         offsetDeadline = millis() + 600000UL;
-        e = axis1.autoGoto(goTo.getRadsPerSecond());
-        if (e == CE_NONE) e = axis2.autoGoto(goTo.getRadsPerSecond());
+        e = axis1.autoGoto(guide.homeRate(HOME_OFFSET_RATE));
+        if (e == CE_NONE) e = axis2.autoGoto(guide.homeRate(HOME_OFFSET_RATE, 2));
         if (e != CE_NONE) abort();
         return;
       #endif

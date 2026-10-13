@@ -135,10 +135,44 @@ int main() {
 }
 ''')
 
+
+def rates(cxx):
+    path = 'src/telescope/mount/guide/Guide.cpp'
+    methods = '\n'.join(method(path, sig) for sig in ['float Guide::homeRate(', 'float Guide::rateSelectToRate(', 'float Guide::limitGuideRate('])
+    run(cxx, 'home_rates', '''
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#define ON 1
+#define GOTO_FEATURE ON
+#define AXIS2_SLEW_RATE_PERCENT 80
+float degToRadF(float v) { return v*0.01745329252F; }
+float radToDegF(float v) { return v/0.01745329252F; }
+struct { float rate = degToRadF(4.0F); } goTo;
+enum GuideRateSelect: uint8_t { GR_QUARTER, GR_HALF, GR_1X, GR_2X, GR_4X, GR_8X, GR_20X, GR_48X, GR_HALF_MAX, GR_MAX, GR_CUSTOM };
+struct Guide {
+ float customRateAxis1=0, customRateAxis2=0;
+ float homeRate(uint8_t, uint8_t = 1);
+ float rateSelectToRate(GuideRateSelect, uint8_t);
+ float limitGuideRate(float);
+} guide;
+''' + methods + '''
+int main() {
+ assert(fabs(guide.homeRate(9)-goTo.rate)<1e-6);
+ assert(fabs(guide.homeRate(8)-goTo.rate/2)<1e-6);
+ assert(fabs(guide.homeRate(7)-degToRadF(0.2F))<1e-6);
+ assert(fabs(guide.homeRate(7,2)-degToRadF(0.16F))<1e-6);
+ goTo.rate = degToRadF(0.1F);
+ assert(guide.homeRate(7)<=goTo.rate);
+ assert(guide.homeRate(7,2)<=goTo.rate*0.8F);
+}
+''')
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cxx', default='g++')
     args = parser.parse_args()
     authority(args.cxx)
+    rates(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)

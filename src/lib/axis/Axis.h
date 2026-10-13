@@ -360,6 +360,9 @@ public:
   // 仅完整经过传感器精找才算成功
   bool homeSucceeded() const { return homeSuccessful; }
 
+  // 指定回零慢速 零值沿用默认降速
+  void setHomeRefineRate(float rate) { homeRefineRate = rate; }
+
   // returns true if a home sensor is available
   inline bool hasHomeSense() { return pins->axisSense.homeTrigger != OFF; }
 
@@ -527,6 +530,7 @@ private:
 
   HomingStage homingStage = HOME_NONE;
   bool homeSuccessful = false;
+  float homeRefineRate = 0.0F;
 
   const AxisPins *pins;
 

@@ -593,6 +593,7 @@ void Axis::poll() {
         motor->setSlewing(false);
         autoRate = AR_NONE;
         freq = 0.0F;
+        bool enteringSlow = homingStage == HOME_FAST;
         if (homingStage == HOME_FAST) homingStage = HOME_SLOW; else 
         if (homingStage == HOME_SLOW) {
           if (!sense.isOn(homeSenseHandle)) homingStage = HOME_FINE; else {
@@ -602,7 +603,7 @@ void Axis::poll() {
         } else
         if (homingStage == HOME_FINE) { homingStage = HOME_NONE; homeSuccessful = true; }
         if (homingStage != HOME_NONE) {
-          float f = fabs(slewFreq)/6.0F;
+          float f = enteringSlow && homeRefineRate > 0.0F ? homeRefineRate : fabs(slewFreq)/6.0F;
           if (f < 0.0003F) f = 0.0003F;
           setFrequencySlew(f);
           autoSlewHome(SLEW_HOME_REFINE_TIME_LIMIT * 1000);

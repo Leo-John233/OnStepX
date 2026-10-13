@@ -645,6 +645,16 @@
 #ifndef NV_INIT_ERROR_REVOKES_AUTHORITY
 #define NV_INIT_ERROR_REVOKES_AUTHORITY ON                        // ON revokes startup authority trust if NV reports an init/read fault
 #endif
+#ifndef HOME_FAST_RATE
+#define HOME_FAST_RATE              9                           // 回零快速档位
+#endif
+#ifndef HOME_SLOW_RATE
+#define HOME_SLOW_RATE              OFF                         // OFF 沿用逐级降速
+#endif
+#ifndef HOME_OFFSET_RATE
+#define HOME_OFFSET_RATE            9                           // 回零偏置档位
+#endif
+
 #ifndef HOME_REQUIRED_ON_BOOT
 #define HOME_REQUIRED_ON_BOOT        OFF                         // 开机要求确认原点
 #endif

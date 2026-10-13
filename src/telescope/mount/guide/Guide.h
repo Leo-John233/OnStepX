@@ -55,6 +55,9 @@ class Guide {
     // start guide home (for use with home switches)
     CommandError startHome();
 
+    // 回零速度档位换算为弧度每秒
+    float homeRate(uint8_t selection, uint8_t axis = 1);
+
     // stop both axes of guide
     void stop();
 

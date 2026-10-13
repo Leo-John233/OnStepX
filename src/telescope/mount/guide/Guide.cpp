@@ -191,6 +191,13 @@ CommandError Guide::startSpiral(GuideRateSelect rateSelect, unsigned long guideT
   return CE_NONE;
 }
 
+// 回零速度沿用手控档位 并限制在本轴最高速度内
+float Guide::homeRate(uint8_t selection, uint8_t axis) {
+  float scale = axis == 2 ? (float)AXIS2_SLEW_RATE_PERCENT/100.0F : 1.0F;
+  float rate = degToRadF(rateSelectToRate((GuideRateSelect)selection, axis)/240.0F)*scale;
+  return fminf(rate, goTo.rate*scale);
+}
+
 // start guide home (for use with home switches)
 CommandError Guide::startHome() {
   #if GOTO_FEATURE == ON
@@ -207,14 +214,16 @@ CommandError Guide::startHome() {
     #if AXIS1_SECTOR_GEAR == ON || AXIS2_TANGENT_ARM == OFF
       guideFinishTimeAxis1 = millis() + (unsigned long)(GUIDE_HOME_TIME_LIMIT * 1000.0);
       guideActionAxis1 = GA_HOME;
-      axis1.setFrequencySlew(goTo.rate);
+      axis1.setHomeRefineRate(HOME_SLOW_RATE == OFF ? 0.0F : homeRate(HOME_SLOW_RATE));
+      axis1.setFrequencySlew(homeRate(HOME_FAST_RATE));
       e = axis1.autoSlewHome();
       if (e != CE_NONE) { abort(); return e; }
     #endif
 
     guideFinishTimeAxis2 = millis() + (unsigned long)(GUIDE_HOME_TIME_LIMIT * 1000.0);
     guideActionAxis2 = GA_HOME;
-    axis2.setFrequencySlew(goTo.rate*((float)(AXIS2_SLEW_RATE_PERCENT)/100.0F));
+    axis2.setHomeRefineRate(HOME_SLOW_RATE == OFF ? 0.0F : homeRate(HOME_SLOW_RATE, 2));
+    axis2.setFrequencySlew(homeRate(HOME_FAST_RATE, 2));
     e = axis2.autoSlewHome();
     if (e != CE_NONE) { abort(); return e; }
   #else
