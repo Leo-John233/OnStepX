@@ -241,7 +241,7 @@ struct Axis { int stops=0; void autoSlewAbort() {++stops;} void setFrequencyScal
 struct Park { int state=0,done=0,failed=0; void requestDone(){++done;state=0;} void requestAborted(){++failed;state=0;mount.tracking(true);} } park;
 struct Home { int state=0,done=0,failed=0; void requestDone(){++done;state=0;} void requestAborted(){++failed;state=0;mount.tracking(false);} } home;
 struct Goto {
- int state=GS_GOTO,stage=GG_DESTINATION,taskHandle=1;
+ int state=GS_GOTO,stage=GG_DESTINATION,taskHandle=1,pendingAlignStars=0;
  bool safetyAborted=false,trackingOnSuccess=true,trackingBeforeGoto=false,ordinaryGoto=true,firstGoto=true;
  struct { bool paused=false,resume=false; } meridianFlipHome;
  void abort(bool safety=false);void finish();void prepare();
@@ -403,7 +403,8 @@ if __name__ == '__main__':
     offset_config(args.cxx)
     from recovery import check
     check(args.cxx)
-    from compatibility import startup
+    from compatibility import startup, alignment
     startup(args.cxx)
+    alignment(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)

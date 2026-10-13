@@ -164,7 +164,7 @@ CommandError Home::requestWithReset() {
   }
   if (hasSense) {
     CommandError result = request();
-    isRequestWithReset = true;
+    if (result == CE_NONE) isRequestWithReset = true;
     return result;
   } else return reset();
 }

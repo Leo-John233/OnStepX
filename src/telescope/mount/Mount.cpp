@@ -458,6 +458,8 @@ void Mount::poll() {
     if (axis1.isEnabled() || axis2.isEnabled()) enable(false);
   }
 
+  goTo.pollAlignment();
+
   #ifdef HAL_NO_DOUBLE_PRECISION
     #define DiffRange  0.0087266463F         // 30 arc-minutes in radians
     #define DiffRange2 0.017453292F          // 60 arc-minutes in radians

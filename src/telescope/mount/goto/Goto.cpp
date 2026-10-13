@@ -78,6 +78,7 @@ CommandError Goto::request() {
 
 // goto equatorial position (Native or Mount coordinate system)
 CommandError Goto::request(Coordinate coords, PierSideSelect pierSideSelect, bool native) {
+  if (pendingAlignStars && home.state != HS_HOMING) return CE_SLEW_IN_MOTION;
   // 无传感器时只放行恢复性回原点
   const bool recoveryHome = home.state == HS_HOMING && !home.hasSense && startupAuthority.canReturnHome();
   if (!startupAuthority.trusted() && !recoveryHome) {
@@ -388,6 +389,7 @@ CommandError Goto::setTarget(Coordinate *coords, PierSideSelect pierSideSelect, 
 
 // stop any presently active goto
 void Goto::abort(bool safety) {
+  pendingAlignStars = 0;
   if (state != GS_GOTO) return;
   safetyAborted |= safety;
   if (safetyAborted) mount.tracking(false);
@@ -449,6 +451,48 @@ CommandError Goto::alignAddStar(bool sync) {
   }
 
   return e;
+}
+
+// 先完成位置准备 再建立校准状态
+CommandError Goto::requestAlignment(uint8_t stars) {
+  if (stars < 1 || stars > ALIGN_MAX_NUM_STARS) return CE_PARAM_RANGE;
+  if (pendingAlignStars || state != GS_NONE || guide.state != GU_NONE || home.state != HS_NONE || mount.isSlewing()) return CE_SLEW_IN_MOTION;
+  if (!site.isDateTimeReady()) return CE_SLEW_ERR_IN_STANDBY;
+  if (mount.motorFault()) return CE_SLEW_ERR_HARDWARE_FAULT;
+  if (!axis1.physicalLimitReady() || !axis2.physicalLimitReady()) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+
+  CommandError e;
+  #if ALIGN_AUTO_HOME == ON && GOTO_FEATURE == ON
+    e = home.requestWithReset();
+  #else
+    if (!startupAuthority.trusted()) return CE_SLEW_ERR_IN_STANDBY;
+    if (park.state == PS_PARKED) return CE_SLEW_ERR_IN_PARK;
+    e = home.reset();
+  #endif
+  if (e != CE_NONE) return e;
+  pendingAlignStars = stars;
+  if (home.state != HS_NONE) return CE_NONE;
+  return pollAlignment();
+}
+
+// 等待回零事务完成 失败时不启动跟踪或星点校准
+CommandError Goto::pollAlignment() {
+  if (!pendingAlignStars) return CE_NONE;
+  if (home.state != HS_NONE) return CE_SLEW_IN_MOTION;
+  uint8_t stars = pendingAlignStars;
+  pendingAlignStars = 0;
+  if (home.failed || !startupAuthority.trusted() || mount.motorFault() ||
+      state != GS_NONE || guide.state != GU_NONE || mount.isSlewing() ||
+      !axis1.physicalLimitReady() || !axis2.physicalLimitReady() || !site.isDateTimeReady()) {
+    alignState.currentStar = alignState.lastStar = 0;
+    return CE_SLEW_ERR_UNSPECIFIED;
+  }
+  mount.tracking(true);
+  if (!mount.isTracking()) return CE_SLEW_ERR_IN_STANDBY;
+  alignState.lastStar = stars;
+  alignState.currentStar = 1;
+  VLF("MSG: Mount, align requested");
+  return CE_NONE;
 }
 
 // reset the alignment model

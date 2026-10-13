@@ -40,3 +40,48 @@ struct Mount {bool autostartComplete=false;void tracking(bool v){if(!startupAuth
     for name, test in cases.items():
         flags = ['-DMOTOR_HOLD_ON_BOOT=' + ('OFF' if name == 'hold_off' else 'ON'), '-DTRACK_AUTOSTART=' + ('ON' if name == 'sensor' else 'OFF')]
         run(cxx, 'startup_' + name, prefix + body + '\nint main(){Mount m;' + test + '}', flags)
+
+def alignment(cxx):
+    body = method('src/telescope/mount/goto/Goto.cpp', 'CommandError Goto::requestAlignment(')
+    body += method('src/telescope/mount/goto/Goto.cpp', 'CommandError Goto::pollAlignment()')
+    prefix = r'''
+#include <cassert>
+#include <cstdint>
+#define ON 1
+#define OFF 0
+#define GOTO_FEATURE ON
+#define ALIGN_MAX_NUM_STARS 9
+#define VLF(x)
+using CommandError=int;
+enum {CE_NONE,CE_PARAM_RANGE,CE_SLEW_IN_MOTION,CE_SLEW_ERR_IN_STANDBY,CE_SLEW_ERR_HARDWARE_FAULT,CE_SLEW_ERR_OUTSIDE_LIMITS,CE_SLEW_ERR_IN_PARK,CE_SLEW_ERR_UNSPECIFIED};
+enum{GS_NONE,GU_NONE=0,HS_NONE=0,HS_HOMING=1,PS_PARKED=1};
+struct{bool ready=true;bool isDateTimeReady(){return ready;}}site;
+struct{bool trust=true;bool trusted(){return trust;}}startupAuthority;
+struct{bool moving=false,fault=false,on=false;bool isSlewing(){return moving;}bool motorFault(){return fault;}void tracking(bool v){on=v;}bool isTracking(){return on;}}mount;
+struct Axis{bool ready=true;bool physicalLimitReady(){return ready;}}axis1,axis2;
+struct{int state=0;}guide,park;
+struct{int state=0,error=0,calls=0;bool failed=false;
+ int reset(){++calls;return error;}
+ int requestWithReset(){++calls;if(!error){state=HS_HOMING;startupAuthority.trust=false;}return error;}}home;
+struct Goto{int state=GS_NONE;uint8_t pendingAlignStars=0;struct{int currentStar=0,lastStar=0;}alignState;
+ int requestAlignment(uint8_t);int pollAlignment();};
+'''
+    for auto in ('ON', 'OFF'):
+        test = r'''
+int main(){
+ Goto g;
+ home.error=CE_SLEW_ERR_OUTSIDE_LIMITS;assert(g.requestAlignment(2)==home.error);assert(!g.pendingAlignStars&&!g.alignState.currentStar&&!mount.on);
+ home.error=0;axis1.ready=false;assert(g.requestAlignment(2)==CE_SLEW_ERR_OUTSIDE_LIMITS);axis1.ready=true;
+ #if ALIGN_AUTO_HOME == ON
+ assert(g.requestAlignment(2)==CE_NONE);assert(!g.alignState.currentStar&&!mount.on&&g.pendingAlignStars==2);
+ assert(g.requestAlignment(3)==CE_SLEW_IN_MOTION);assert(g.pollAlignment()==CE_SLEW_IN_MOTION);
+ home.state=HS_NONE;home.failed=true;assert(g.pollAlignment()!=CE_NONE);assert(!g.pendingAlignStars&&!mount.on);
+ home.failed=false;assert(g.requestAlignment(3)==CE_NONE);home.state=HS_NONE;startupAuthority.trust=true;
+ assert(g.pollAlignment()==CE_NONE);assert(g.alignState.currentStar==1&&g.alignState.lastStar==3&&mount.on);
+ #else
+ startupAuthority.trust=false;int before=home.calls;assert(g.requestAlignment(2)==CE_SLEW_ERR_IN_STANDBY);assert(home.calls==before);
+ startupAuthority.trust=true;assert(g.requestAlignment(2)==CE_NONE);assert(g.alignState.currentStar==1&&g.alignState.lastStar==2&&mount.on);
+ #endif
+}
+'''
+        run(cxx, 'alignment_' + auto.lower(), prefix + body + test, ['-DALIGN_AUTO_HOME=' + auto])

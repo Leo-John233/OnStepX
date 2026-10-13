@@ -73,6 +73,9 @@ class Goto {
 
     // add an align star (at the current position relative to target)
     CommandError alignAddStar(bool sync = false);
+    // 校准申请与回零完成分开处理
+    CommandError requestAlignment(uint8_t stars);
+    CommandError pollAlignment();
 
     // reset the alignment model
     void alignReset();
@@ -166,6 +169,7 @@ class Goto {
     MeridianFlipHome meridianFlipHome = {false, false};
 
     AlignState alignState = {0, 0};
+    uint8_t pendingAlignStars = 0;
 
     float      usPerStepBase        = 128.0F;
     float      radsPerSecondCurrent;

@@ -54,18 +54,7 @@ bool Goto::command(char *reply, char *command, char *parameter, bool *suppressFr
     //            Return: 0 on failure
     //                    1 on success
     if (command[1] >= '1' && command[1] <= ALIGN_MAX_NUM_STARS + '0' && parameter[0] == 0) {
-      // set current time and date before calling this routine
-      #if ALIGN_AUTO_HOME == ON && GOTO_FEATURE == ON
-        home.requestWithReset();
-      #else
-        home.reset();
-      #endif
-      mount.tracking(true);
-
-      // start align...
-      alignState.lastStar = command[1] - '0';
-      alignState.currentStar = 1;
-      VLF("MSG: Mount, align requested");
+      *commandError = requestAlignment(command[1] - '0');
     } else
 
     // :A+#       Align accept target location
