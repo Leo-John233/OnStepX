@@ -54,7 +54,7 @@ void StartupAuthority::requireHome(bool coordinatesKnown, bool allowParkRestore)
   mount.tracking(false);
 }
 
-// 只有确认原点后才解除恢复锁 NV 故障仍可拒绝授权
+// 确认原点或有效泊车坐标后解除恢复锁 NV 故障仍可拒绝授权
 void StartupAuthority::completeHome() {
   parkRestoreAllowed = false;
   homeRequired = false;
