@@ -13,6 +13,7 @@
 #include "../goto/Goto.h"
 #include "../guide/Guide.h"
 #include "../limits/Limits.h"
+#include "../park/Park.h"
 #include "../startupAuthority/StartupAuthority.h"
 
 // init the home position (according to settings and mount type)
@@ -66,6 +67,12 @@ CommandError Home::request() {
     if (guide.state != GU_NONE) {
       if (guide.state == GU_HOME_GUIDE) guide.stop();
       return CE_SLEW_IN_MOTION;
+    }
+
+    // 恢复性回零允许退出泊车 坐标丢失时仍须使用传感器
+    if (park.state == PS_PARKED) {
+      if (!startupAuthority.needsHome()) return CE_SLEW_ERR_IN_PARK;
+      park.reset();
     }
 
     isRequestWithReset = false;

@@ -128,6 +128,17 @@ int main() {
   assert(!startupAuthority.canReturnHome());
   startupAuthority.completeHome();
   assert(startupAuthority.trusted());
+  startupAuthority.requireHome(false, true);
+  assert(startupAuthority.canRestorePark() && !startupAuthority.trusted());
+  startupAuthority.requireHome();
+  assert(!startupAuthority.canRestorePark());
+  startupAuthority.requireHome(false, true);
+  assert(!startupAuthority.canRestorePark());
+  startupAuthority.completeHome();
+  startupAuthority.requireHome(false, true);
+  startupAuthority.setTrusted(false);
+  assert(!startupAuthority.canRestorePark());
+  startupAuthority.completeHome();
   startupAuthority.requireHome(true);
   initError.nv = true;
   startupAuthority.completeHome();
@@ -390,5 +401,7 @@ if __name__ == '__main__':
     st4_button(args.cxx)
     home_offsets(args.cxx)
     offset_config(args.cxx)
+    from recovery import check
+    check(args.cxx)
     if 'void Home::poll()' in (ROOT / 'src/telescope/mount/home/Home.cpp').read_text(encoding='utf-8'):
         homing(args.cxx)

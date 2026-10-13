@@ -209,7 +209,8 @@ void Park::requestDone() {
 // returns a parked telescope to operation
 CommandError Park::restore(bool withTrackingOn) {
   if (!settings.saved) return CE_NO_PARK_POSITION_SET;
-  if (!startupAuthority.trusted()) {
+  const bool recoverPark = state == PS_PARKED && startupAuthority.canRestorePark();
+  if (!startupAuthority.trusted() && !recoverPark) {
     DLF("WRN: Mount, unpark rejected because startup authority is not trusted");
     return CE_SLEW_ERR_UNSPECIFIED;
   }
@@ -233,6 +234,10 @@ CommandError Park::restore(bool withTrackingOn) {
     return CE_PARKED;
   }
   if (mount.motorFault()) return CE_SLEW_ERR_HARDWARE_FAULT;
+
+  // 恢复坐标前必须停稳且限位已释放
+  if (goTo.state != GS_NONE || guide.state != GU_NONE || home.state != HS_NONE || mount.isSlewing()) return CE_SLEW_IN_MOTION;
+  if (!axis1.physicalLimitReady() || !axis2.physicalLimitReady()) return CE_SLEW_ERR_OUTSIDE_LIMITS;
 
   if (withTrackingOn) {
     VLF("MSG: Mount, unparking");
@@ -288,7 +293,12 @@ CommandError Park::restore(bool withTrackingOn) {
     axis2.setBacklash(mount.settings.backlash.axis2);
   }
   
-  limits.enabled(true);
+  // 坐标恢复成功后才解除开机锁 自动恢复仍等待 Home 或 Unpark
+  if (recoverPark && withTrackingOn) {
+    startupAuthority.completeHome();
+    if (!startupAuthority.trusted()) return CE_SLEW_ERR_UNSPECIFIED;
+  }
+  limits.enabled(startupAuthority.trusted());
   if (!goTo.absoluteEncodersPresent) mount.syncFromOnStepToEncoders = true;
 
   if (withTrackingOn) {

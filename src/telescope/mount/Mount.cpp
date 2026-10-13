@@ -219,7 +219,7 @@ void Mount::begin() {
 
   // 回零确认独立于默认启动授权策略
   #if HOME_REQUIRED_ON_BOOT == ON
-    startupAuthority.requireHome(!home.hasSense && startupAuthority.trusted());
+    startupAuthority.requireHome(!home.hasSense && startupAuthority.trusted(), park.state == PS_PARKED);
   #endif
 
   // 开机保持独立于回零授权 使用驱动器已有静止电流策略
@@ -308,7 +308,8 @@ void Mount::autostartPostponed() {
   if (!autoUnparkDone && park.state == PS_PARKED) {
     #if GOTO_FEATURE == ON
       VLF("MSG: Mount, autostart park restore");
-      CommandError e = park.restore(TRACK_AUTOSTART == ON);
+      // 开机回零锁期间只恢复坐标 显式 Unpark 才解除恢复锁
+      CommandError e = park.restore(TRACK_AUTOSTART == ON && !startupAuthority.needsHome());
       if (e != CE_NONE) {
         DF("WRN: Mount, autostart park restore failed with code "); DL(e);
         autoStartDone = true;

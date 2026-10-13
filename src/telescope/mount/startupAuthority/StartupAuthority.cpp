@@ -17,6 +17,7 @@ void StartupAuthority::init() {
 
 void StartupAuthority::begin() {
   homeRequired = false;
+  parkRestoreAllowed = false;
   trustedValue = false;
   trustEstablishedValue = false;
   commissioningAllowed = false;
@@ -33,6 +34,7 @@ void StartupAuthority::setTrusted(bool state) {
   #endif
 
   trustedValue = state;
+  if (!state) parkRestoreAllowed = false;
   if (state) {
     trustEstablishedValue = true;
     commissioningAllowed = false;
@@ -44,7 +46,8 @@ void StartupAuthority::setTrusted(bool state) {
 }
 
 // 停止跟踪并锁定自动运动 手动退出仍由限位检查约束
-void StartupAuthority::requireHome(bool coordinatesKnown) {
+void StartupAuthority::requireHome(bool coordinatesKnown, bool allowParkRestore) {
+  parkRestoreAllowed = allowParkRestore && trusted();
   if (!coordinatesKnown) trustedValue = false;
   homeRequired = true;
   limits.enabled(false);
@@ -53,6 +56,7 @@ void StartupAuthority::requireHome(bool coordinatesKnown) {
 
 // 只有确认原点后才解除恢复锁 NV 故障仍可拒绝授权
 void StartupAuthority::completeHome() {
+  parkRestoreAllowed = false;
   homeRequired = false;
   trustedValue = false;
   setTrusted(true);

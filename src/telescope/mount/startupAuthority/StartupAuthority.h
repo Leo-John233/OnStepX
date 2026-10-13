@@ -17,7 +17,9 @@ class StartupAuthority {
     // 恢复锁期间仅允许已知坐标返回原点
     inline bool needsHome() const { return homeRequired; }
     inline bool canReturnHome() const { return trustedValue && homeRequired; }
-    void requireHome(bool coordinatesKnown = false);
+    void requireHome(bool coordinatesKnown = false, bool allowParkRestore = false);
+    // 仅开机时已验证的泊车记录可用于恢复
+    inline bool canRestorePark() const { return parkRestoreAllowed; }
     void completeHome();
     bool required() const;
     CommandError validateManualMotion() const;
@@ -35,6 +37,7 @@ class StartupAuthority {
     bool trustEstablishedValue = false;
     bool trustedValue = false;
     bool homeRequired = false;
+    bool parkRestoreAllowed = false;
 };
 
 extern StartupAuthority startupAuthority;
