@@ -57,7 +57,6 @@ CommandError Home::request() {
 
     if (!axis1.physicalLimitReady() || !axis2.physicalLimitReady()) return CE_SLEW_ERR_OUTSIDE_LIMITS;
     if (mount.motorFault()) return CE_SLEW_ERR_HARDWARE_FAULT;
-    failed = false;
     if (!startupAuthority.trusted() && !hasSense && !startupAuthority.canReturnHome()) {
       DLF("WRN: Mount, home rejected because startup authority is not trusted and no home switches are present");
       return CE_SLEW_ERR_UNSPECIFIED;
@@ -69,14 +68,25 @@ CommandError Home::request() {
       return CE_SLEW_IN_MOTION;
     }
 
-    // 恢复性回零允许退出泊车 坐标丢失时仍须使用传感器
-    if (park.state == PS_PARKED) {
-      if (!startupAuthority.needsHome()) return CE_SLEW_ERR_IN_PARK;
-      park.reset();
-    }
+    if (park.state == PS_PARKED && !startupAuthority.needsHome()) return CE_SLEW_ERR_IN_PARK;
+
+    // 前置检查只读取状态 拒绝请求时保留坐标与运动状态
+    Coordinate homePosition = getPosition(CR_MOUNT_EQU);
+    #if AXIS1_SECTOR_GEAR == OFF && AXIS2_TANGENT_ARM == OFF
+      if (hasSense && startupAuthority.trusted()) {
+        double a1 = axis1.getInstrumentCoordinate() - homePosition.a1;
+        double a2 = axis2.getInstrumentCoordinate() - homePosition.a2;
+        VF("MSG: Mount, homing from a1="); V(radToDeg(a1)); VF(" degrees a2="); V(radToDeg(a2)); VLF(" degrees");
+        if (abs(a1) > degToRad(AXIS1_SENSE_HOME_DIST_LIMIT) - abs(arcsecToRad(settings.axis1.senseOffset))) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+        if (abs(a2) > degToRad(AXIS2_SENSE_HOME_DIST_LIMIT) - abs(arcsecToRad(settings.axis2.senseOffset))) return CE_SLEW_ERR_OUTSIDE_LIMITS;
+      }
+    #endif
+
+    // 检查通过后才进入回零流程 恢复性回零允许退出泊车
+    if (park.state == PS_PARKED) park.reset();
+    failed = false;
 
     isRequestWithReset = false;
-    const bool coordinatesKnown = startupAuthority.trusted();
     wasTracking = mount.isTracking();
     #if AXIS1_SECTOR_GEAR == ON || AXIS2_TANGENT_ARM == OFF
       mount.tracking(false);
@@ -86,8 +96,6 @@ CommandError Home::request() {
     mount.enable(true);
     goTo.firstGoto = false;
 
-    Coordinate homePosition = getPosition(CR_MOUNT_EQU);
-
     if (hasSense) {
       CommandError e;
       // 传感器回零开始后 暂停普通自动运动
@@ -96,14 +104,6 @@ CommandError Home::request() {
       offsetActive = false;
 
       #if AXIS1_SECTOR_GEAR == OFF && AXIS2_TANGENT_ARM == OFF
-        double a1 = axis1.getInstrumentCoordinate() - homePosition.a1;
-        double a2 = axis2.getInstrumentCoordinate() - homePosition.a2;
-
-        // both -180 to 180
-        VF("MSG: Mount, homing from a1="); V(radToDeg(a1)); VF(" degrees a2="); V(radToDeg(a2)); VLF(" degrees");
-        if (coordinatesKnown && abs(a1) > degToRad(AXIS1_SENSE_HOME_DIST_LIMIT) - abs(arcsecToRad(settings.axis1.senseOffset))) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-        if (coordinatesKnown && abs(a2) > degToRad(AXIS2_SENSE_HOME_DIST_LIMIT) - abs(arcsecToRad(settings.axis2.senseOffset))) return CE_SLEW_ERR_OUTSIDE_LIMITS;
-
         state = HS_HOMING;
         e = reset(false);
         if (e != CE_NONE) { requestAborted(); return e; }

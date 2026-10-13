@@ -4,6 +4,7 @@ from run import method, run
 PREFIX = r'''
 #include <cassert>
 #include <cmath>
+using std::abs;
 #define ON 1
 #define OFF 0
 #define GOTO_FEATURE ON
@@ -42,10 +43,10 @@ struct Axis {bool ready=true;double pos=0; bool physicalLimitReady(){return read
  double getInstrumentCoordinate(){return pos;} void setBacklashSteps(int){} void setBacklash(double){}
  void setInstrumentCoordinatePark(double v){pos=v;} long getMotorPositionSteps(){return 0;}
 } axis1,axis2;
-struct {bool fault=false,moving=false,on=false,syncFromOnStepToEncoders=false;
+struct {bool fault=false,moving=false,on=false,syncFromOnStepToEncoders=false;int enables=0;
  struct {struct {double axis1=0,axis2=0;} backlash;} settings;
  bool motorFault(){return fault;} bool isSlewing(){return moving;} bool isHome(){return true;}
- bool isTracking(){return on;} void tracking(bool v){on=v;} void enable(bool){} void captureNominalIndexPositions(){}
+ bool isTracking(){return on;} void tracking(bool v){on=v;} void enable(bool){++enables;} void captureNominalIndexPositions(){}
 } mount;
 struct {bool on=false;struct{double pastMeridianE=0,pastMeridianW=0;}settings;void enabled(bool v){on=v;}} limits;
 struct {int mountType=GEM;void equToHor(Coordinate*){} void equToAa(Coordinate*){}
@@ -68,6 +69,37 @@ struct Park {int state=PS_PARKED,nvKey=0;struct{bool saved=true;int state=PS_PAR
 
 def check(cxx):
     bodies = method('src/telescope/mount/home/Home.cpp', 'CommandError Home::request()') + '\n' + method('src/telescope/mount/park/Park.cpp', 'CommandError Park::restore(')
+    run(cxx, 'home_request_preflight', PREFIX + bodies + r'''
+void fresh(){startupAuthority={};site={};axis1={};axis2={};mount={};limits={};goTo={};guide={};home={};park={};
+ park.state=PS_UNPARKED;startupAuthority.trust=true;startupAuthority.locked=false;}
+int main(){
+ // 两轴 正负方向及正负偏置均不能通过重复请求绕过距离检查
+ for(int axis=1;axis<=2;++axis) for(int sign=-1;sign<=1;sign+=2) for(int offset=-1;offset<=1;++offset){
+  fresh();mount.on=true;limits.on=true;home.failed=true;home.isRequestWithReset=true;
+  Axis& a=axis==1?axis1:axis2;
+  if(axis==1) home.settings.axis1.senseOffset=offset*5400;
+  else home.settings.axis2.senseOffset=offset*5400;
+  a.pos=degToRad(sign*(offset?179:181));
+  for(int attempt=0;attempt<3;++attempt){
+   assert(home.request()==CE_SLEW_ERR_OUTSIDE_LIMITS);
+   assert(startupAuthority.trusted()&&startupAuthority.parkAllowed&&limits.on);
+   assert(mount.on&&mount.enables==0&&goTo.firstGoto);
+   assert(home.failed&&home.isRequestWithReset&&home.state==HS_NONE&&guide.starts==0);
+  }
+  a.pos=0;assert(home.request()==CE_NONE);
+  assert(!startupAuthority.trusted()&&!home.failed&&!home.isRequestWithReset);
+  assert(home.state==HS_HOMING&&guide.starts==1&&!mount.on);
+ }
+ // 距离边界允许回零 坐标丢失时仍允许传感器恢复
+ fresh();axis1.pos=degToRad(180);assert(home.request()==CE_NONE);
+ fresh();startupAuthority.trust=false;startupAuthority.locked=true;axis1.pos=degToRad(200);
+ assert(home.request()==CE_NONE&&guide.starts==1);
+ // 已接受请求后的失败仍保留恢复锁
+ fresh();home.resetError=CE_SLEW_ERR_UNSPECIFIED;
+ assert(home.request()==CE_SLEW_ERR_UNSPECIFIED);
+ assert(!startupAuthority.trusted()&&guide.starts==0);
+}
+''')
     run(cxx, 'park_home_recovery', PREFIX + bodies + r'''
 void fresh(){startupAuthority={};site={};axis1={};axis2={};mount={};limits={};goTo={};guide={};home={};park={};}
 int main(){
