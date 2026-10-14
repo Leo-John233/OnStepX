@@ -4,6 +4,45 @@ from run import method, run, source
 
 
 def check(cxx):
+    run(cxx, 'addon_passthrough_timeout', r'''
+#include <cassert>
+#include <cstdint>
+#define VLF(x)
+uint32_t now=0,origin=0;
+uint32_t millis(){return now;}
+void delayMicroseconds(int){}
+bool traffic=false;
+struct Port {
+ bool host;int writes=0;
+ Port(bool isHost):host(isHost){}
+ bool available(){
+  if(!host){now+=1000;assert(uint32_t(now-origin)<200000);return false;}
+  uint32_t elapsed=now-origin;
+  return traffic && elapsed>=10000 && elapsed<=120000;
+ }
+ int read(){return 42;}
+ void write(int v){assert(v==42);++writes;}
+} host{true},device{false};
+#define SERIAL_A host
+#define SERIAL_PASSTHROUGH device
+struct AddonFlasher {
+ int flashes=0,resumes=0;
+ void go(bool);
+ void flash(){++flashes;}
+ void run(bool restore){assert(restore);++resumes;}
+};
+''' + method('src/telescope/addonFlasher/AddonFlasher.cpp', 'void AddonFlasher::go(') + r'''
+int main(){
+ for(int wrap=0;wrap<2;++wrap) for(int active=0;active<2;++active){
+  now=origin=wrap?0xffff0000U:0U;traffic=active;device.writes=0;
+  AddonFlasher f;f.go(true);
+  uint32_t elapsed=now-origin;
+  assert(elapsed==(active?151000U:91000U));
+  assert(device.writes==(active?111:0));
+  assert(f.flashes==1&&f.resumes==1);
+ }
+}
+''')
     prefix = r'''
 #include <cassert>
 #include <vector>

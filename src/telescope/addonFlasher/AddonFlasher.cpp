@@ -42,8 +42,9 @@ extern HardwareSerial HWSerialB;
 
     VLF("MSG: AddonFlasher, activating serial passthrough...");
 
-    // so we have a total of 1.5 minutes to start the upload
-    unsigned long lastRead = millis() + 85000U;
+    // 首次连接等待 90 秒 收到上传数据后改为 30 秒空闲超时
+    uint32_t lastRead = millis();
+    uint32_t waitMs = 90000U;
     while (true) {
       // read from port 1, send to port 0:
       if (SERIAL_PASSTHROUGH.available()) {
@@ -59,12 +60,13 @@ extern HardwareSerial HWSerialB;
         delayMicroseconds(5);
         SERIAL_PASSTHROUGH.write(inByte);
         delayMicroseconds(5);
-        if ((long)(millis() - lastRead > 0)) lastRead = millis();
+        lastRead = millis();
+        waitMs = 30000U;
       }
       //tasks.yield();
 
-      // wait 30 seconds w/no traffic before resuming normal operation
-      if (timeout && (millis() - lastRead > 30000U)) break;
+      // 使用已过去的时间判断超时 兼容毫秒计数回绕
+      if (timeout && (uint32_t)(millis() - lastRead) > waitMs) break;
     }
     VLF("MSG: AddonFlasher, serial passthrough deactivated");
 
