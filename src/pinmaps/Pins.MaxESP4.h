@@ -65,13 +65,6 @@
   #if ADDON_RESET_PIN == 2
     #define ADDON_RESET_SHARED_INPUT                              // 复位后释放共用输入引脚
   #endif
-  // 图纸未连接的功能不分配引脚
-  #define ONE_WIRE_PIN                     OFF
-  #define PEC_SENSE_PIN                    OFF
-  #define RETICLE_LED_PIN                  OFF
-  #define STATUS_BUZZER_PIN                OFF
-  #define PPS_SENSE_PIN                    OFF
-  #define LIMIT_SENSE_PIN                  OFF                    // 两轴使用独立限位
 #endif
 #ifndef ONE_WIRE_PIN
   #define ONE_WIRE_PIN                     AUX8_PIN               // 单总线默认引脚
@@ -79,7 +72,11 @@
 
 // PEC 索引输入 上升沿触发 间隔至少 60 秒
 #ifndef PEC_SENSE_PIN
-  #define PEC_SENSE_PIN                    36                     // PEC 输入 GPIO36 仅可输入
+  #if defined(STEP_DIR_TMC_SPI_PRESENT)
+    #define PEC_SENSE_PIN                  OFF                    // 沿用 OnStep MaxESP3 的 PEC 设置
+  #else
+    #define PEC_SENSE_PIN                  36                     // PEC 输入 GPIO36 仅可输入
+  #endif
 #endif
 
 // 状态灯
@@ -113,7 +110,7 @@
   #define PPS_SENSE_PIN                    AUX7_PIN               // PPS 时间源 例如 GPS
 #endif
 
-// 原 UART 接线共用限位 接地触发
+// 默认限位输入 接地触发 各轴可单独指定引脚
 #ifndef LIMIT_SENSE_PIN
   #define LIMIT_SENSE_PIN                  AUX7_PIN
 #endif
