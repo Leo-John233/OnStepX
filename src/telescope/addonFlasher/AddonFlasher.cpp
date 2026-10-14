@@ -119,10 +119,18 @@ extern HardwareSerial HWSerialB;
   void AddonFlasher::reset() {
     // reset LOW (active) HIGH (inactive)
     tasks.yield(200);
+    #ifdef ADDON_RESET_SHARED_INPUT
+      // SPI 初始化后引脚为输入 复位前临时切换为输出
+      pinModeEx(ADDON_RESET_PIN, OUTPUT);
+    #endif
     digitalWriteEx(ADDON_RESET_PIN, LOW);
     tasks.yield(200);
     digitalWriteEx(ADDON_RESET_PIN, HIGH);
     tasks.yield(200);
+    #ifdef ADDON_RESET_SHARED_INPUT
+      // 复位结束后释放引脚 供 SPI 读取
+      pinModeEx(ADDON_RESET_PIN, INPUT_PULLUP);
+    #endif
   }
 
   void AddonFlasher::poll() {

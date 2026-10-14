@@ -55,6 +55,16 @@
 
 // 其他引脚
 #if defined(STEP_DIR_TMC_SPI_PRESENT)
+  // ESP07 烧录前停止轴运动 烧录时短接 RST 跳线 正常运行时断开
+  #ifndef ADDON_GPIO0_PIN
+    #define ADDON_GPIO0_PIN                26                     // ESP07 GPIO0 与赤纬方向共用
+  #endif
+  #ifndef ADDON_RESET_PIN
+    #define ADDON_RESET_PIN                2                      // ESP07 RST 经跳线连接 SPI MISO
+  #endif
+  #if ADDON_RESET_PIN == 2
+    #define ADDON_RESET_SHARED_INPUT                              // 复位后释放共用输入引脚
+  #endif
   // 图纸未连接的功能不分配引脚
   #define ONE_WIRE_PIN                     OFF
   #define PEC_SENSE_PIN                    OFF
