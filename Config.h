@@ -8,7 +8,7 @@
 // ============================================================================
 // 控制器
 // ============================================================================
-#define HOST_NAME                         "OnStep"      // [调整] 本设备的主机名 最多 16 个字符
+#define HOST_NAME                         "OnStepX"      // [调整] 本设备的主机名 最多 16 个字符
 
 // --- 引脚映射 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Controller#PINMAP
@@ -19,7 +19,7 @@
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Controller#SERIAL_PORTS
 #define SERIAL_A_BAUD_DEFAULT             9600          // [少改] 其中 n=9600,19200,57600,115200,230400,460800 为常用波特率
 #define SERIAL_B_BAUD_DEFAULT             9600          // [少改] 波特率同上 串口分配请查看 src/pinmaps/
-#define SERIAL_B_ESP_FLASHING             OFF           // [可选] ON 通过 SERIAL_B 使用 :ESPFLASH# 命令上传 ESP8266 WiFi 固件
+#define SERIAL_B_ESP_FLASHING             ON            // [可选] ON 通过 SERIAL_B 使用 :ESPFLASH# 命令上传 ESP8266 WiFi 固件
 #define SERIAL_C_BAUD_DEFAULT             OFF           // [少改] 波特率同上 串口分配请查看 src/pinmaps/
 #define SERIAL_D_BAUD_DEFAULT             OFF           // [少改] 波特率同上 串口分配请查看 src/pinmaps/
 #define SERIAL_E_BAUD_DEFAULT             OFF           // [少改] 波特率同上 串口分配请查看 src/pinmaps/
@@ -66,7 +66,7 @@
 #define AXIS1_STEPS_PER_DEGREE            14222.222     // [必填] 每度步数
                                                         //        n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
 #define AXIS1_REVERSE                     OFF           // [常用] ON 反转运动方向 也可通过反接电机线修正方向
-#define AXIS1_LIMIT_MIN                   -180          // [调整] 其中 n=-90..-360 单位为度 表示最小赤经时角或方位角
+#define AXIS1_LIMIT_MIN                  -180           // [调整] 其中 n=-90..-360 单位为度 表示最小赤经时角或方位角
 #define AXIS1_LIMIT_MAX                   180           // [调整] 其中 n=90..360 单位为度 表示最大赤经时角或方位角
 #define AXIS1_LIMIT_SYNC                  OFF           // [可选] 其中 n=0..90 单位为度 仅允许在此正负范围内同步或复位
 
@@ -79,7 +79,7 @@
 #define AXIS1_DRIVER_IGOTO                1500          // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
 // 运行时设置覆盖范围 结束
 
-#define AXIS1_DRIVER_STATUS               ON            // [可选] ON, HIGH 或 LOW 用于驱动器状态信息和故障检测 默认 OFF
+#define AXIS1_DRIVER_STATUS               OFF            // [可选] ON, HIGH 或 LOW 用于驱动器状态信息和故障检测 默认 OFF
 
 #define AXIS1_DRIVER_DECAY                STEALTHCHOP   // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
 #define AXIS1_DRIVER_DECAY_GOTO           SPREADCYCLE   // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
@@ -104,7 +104,7 @@
 #define AXIS2_STEPS_PER_DEGREE            14222.222     // [必填] 每度步数
                                                         //        n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
 #define AXIS2_REVERSE                     ON            // [常用] ON 反转运动方向 也可通过反接电机线修正方向
-#define AXIS2_LIMIT_MIN                   -90           // [少改] 其中 n=-90..0 单位为度 表示允许的最小赤纬或高度角
+#define AXIS2_LIMIT_MIN                  -90            // [少改] 其中 n=-90..0 单位为度 表示允许的最小赤纬或高度角
 #define AXIS2_LIMIT_MAX                   90            // [少改] 其中 n=0..90 单位为度 表示允许的最大赤纬或高度角
 #define AXIS2_LIMIT_SYNC                  OFF           // [可选] 其中 n=0..90 单位为度 仅允许在此正负范围内同步或复位
 
@@ -117,7 +117,7 @@
 #define AXIS2_DRIVER_IGOTO                1300          // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
 // 运行时设置覆盖范围 结束
 
-#define AXIS2_DRIVER_STATUS               ON            // [可选] ON, HIGH 或 LOW 轮询驱动器状态信息和故障检测 默认 OFF
+#define AXIS2_DRIVER_STATUS               OFF            // [可选] ON, HIGH 或 LOW 轮询驱动器状态信息和故障检测 默认 OFF
 
 #define AXIS2_DRIVER_DECAY                STEALTHCHOP   // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
 #define AXIS2_DRIVER_DECAY_GOTO           SPREADCYCLE   // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE

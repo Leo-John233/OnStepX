@@ -9,7 +9,7 @@
 // AP_SSID                ESP WiFi 热点对外显示的名称
 // SERIAL_BT_NAME         ESP32 蓝牙客户端对蓝牙服务器显示的名称
 #ifndef HOST_NAME
-#define HOST_NAME                           "OnStep"       // 本设备的主机名 最多 16 个字符
+#define HOST_NAME                           "OnStepX"      // 本设备的主机名 最多 16 个字符
 #endif
 
 // 设备名称

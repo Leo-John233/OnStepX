@@ -13,7 +13,7 @@
 // 在指定的 SERIAL_DEBUG 端口输出额外的调试信息和状态信息 使用完毕后请务必禁用
 // 注意 SERIAL_DEBUG 端口通常与 SERIAL_A 使用同一串口 因此不能用于正常的 LX200 协议通信
 //      如果属于这种情况 请将两者设置为下方指定的相同且较高的波特率
-#define DEBUG                             VERBOSE       // [少改] 默认 OFF | ON 仅输出后台错误信息 VERBOSE 输出全部错误和状态信息
+#define DEBUG                             OFF           // [少改] 默认 OFF | ON 仅输出后台错误信息 VERBOSE 输出全部错误和状态信息
                                                         //        CONSOLE 启用 VT100 调试控制台
                                                         //        PROFILER 启用 VT100 任务分析器
 #define DEBUG_AXIS                        OFF           // [可选] 默认 OFF | 其中 n=1 至 9 且该轴必须已在 Config.h 中启用
