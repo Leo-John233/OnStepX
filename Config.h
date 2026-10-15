@@ -19,7 +19,7 @@
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Controller#SERIAL_PORTS
 #define SERIAL_A_BAUD_DEFAULT             9600          // [少改] 其中 n=9600,19200,57600,115200,230400,460800 为常用波特率
 #define SERIAL_B_BAUD_DEFAULT             9600          // [少改] 波特率同上 串口分配请查看 src/pinmaps/
-#define SERIAL_B_ESP_FLASHING             ON            // [可选] ON 允许通过 :ESPFLASH# 透传烧录 ESP8266 OFF 禁用透传烧录
+#define SERIAL_B_ESP_FLASHING             ON            // OFF, ON  ON 允许通过 :ESPFLASH# 透传烧录 ESP8266 OFF 禁用透传烧录
 #define SERIAL_C_BAUD_DEFAULT             OFF           // [少改] 波特率同上 串口分配请查看 src/pinmaps/
 #define SERIAL_D_BAUD_DEFAULT             OFF           // [少改] 波特率同上 串口分配请查看 src/pinmaps/
 #define SERIAL_E_BAUD_DEFAULT             OFF           // [少改] 波特率同上 串口分配请查看 src/pinmaps/
@@ -27,13 +27,13 @@
 
 // --- 状态指示 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Controller#STATUS_LED
-#define STATUS_LED                        OFF           // [可选] ON 启用状态灯 正常常亮 故障闪烁 OFF 关闭状态灯
+#define STATUS_LED                        OFF           // OFF, ON  ON 启用状态灯 正常常亮 故障闪烁 OFF 关闭状态灯
 
 // --- 分划板控制 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Controller#RETICLE_CONTROL
 #define RETICLE_LED_DEFAULT               OFF           // [可选] 其中 n=0..255 对应 0..100% 启用功能并设置默认亮度
-#define RETICLE_LED_MEMORY                OFF           // [可选] ON 断电保存分划板亮度 OFF 每次开机使用默认亮度
-#define RETICLE_LED_INVERT                OFF           // [可选] ON 反转亮度输出 OFF 使用默认输出逻辑
+#define RETICLE_LED_MEMORY                OFF           // OFF, ON  ON 断电保存分划板亮度 OFF 每次开机使用默认亮度
+#define RETICLE_LED_INVERT                OFF           // OFF, ON  ON 反转亮度输出 OFF 使用默认输出逻辑
 
 // --- 气象传感器 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Controller#WEATHER_SENSOR
@@ -65,7 +65,7 @@
 // 运行时设置覆盖范围 开始
 #define AXIS1_STEPS_PER_DEGREE            14222.222     // [必填] 每度步数
                                                         //        n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
-#define AXIS1_REVERSE                     OFF           // [常用] ON 反转电机运动方向 OFF 使用默认方向
+#define AXIS1_REVERSE                     OFF           // OFF, ON  ON 反转电机运动方向 OFF 使用默认方向
 #define AXIS1_LIMIT_MIN                  -180           // [调整] 其中 n=-90..-360 单位为度 表示最小赤经时角或方位角
 #define AXIS1_LIMIT_MAX                   180           // [调整] 其中 n=90..360 单位为度 表示最大赤经时角或方位角
 #define AXIS1_LIMIT_SYNC                  OFF           // [可选] 其中 n=0..90 单位为度 仅允许在此正负范围内同步或复位
@@ -79,12 +79,12 @@
 #define AXIS1_DRIVER_IGOTO                1500          // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
 // 运行时设置覆盖范围 结束
 
-#define AXIS1_DRIVER_STATUS               OFF            // [可选] ON 启用驱动状态检测 OFF 关闭 HIGH 或 LOW 指定故障引脚有效电平
+#define AXIS1_DRIVER_STATUS               OFF            // OFF, ON, HIGH, LOW  驱动状态检测 ON 启用 OFF 关闭 HIGH/LOW 指定故障有效电平
 
 #define AXIS1_DRIVER_DECAY                STEALTHCHOP   // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
 #define AXIS1_DRIVER_DECAY_GOTO           SPREADCYCLE   // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
 
-#define AXIS1_POWER_DOWN                  OFF           // [少改] ON 停止运动后延时关闭电机 OFF 不因空闲自动关闭
+#define AXIS1_POWER_DOWN                  OFF           // OFF, ON  ON 停止运动后延时关闭电机 OFF 不因空闲自动关闭
                                                         //        默认停止 30 秒后断电 低速导星后延长至 10 分钟
 
 #define AXIS1_SENSE_HOME                  LOW           // [可选] HIGH 或 LOW 用于启用并指定从正面观察时顺时针方向的原点状态
@@ -103,7 +103,7 @@
 // 运行时设置覆盖范围 开始
 #define AXIS2_STEPS_PER_DEGREE            14222.222     // [必填] 每度步数
                                                         //        n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
-#define AXIS2_REVERSE                     ON            // [常用] ON 反转电机运动方向 OFF 使用默认方向
+#define AXIS2_REVERSE                     ON            // OFF, ON  ON 反转电机运动方向 OFF 使用默认方向
 #define AXIS2_LIMIT_MIN                  -90            // [少改] 其中 n=-90..0 单位为度 表示允许的最小赤纬或高度角
 #define AXIS2_LIMIT_MAX                   90            // [少改] 其中 n=0..90 单位为度 表示允许的最大赤纬或高度角
 #define AXIS2_LIMIT_SYNC                  OFF           // [可选] 其中 n=0..90 单位为度 仅允许在此正负范围内同步或复位
@@ -117,12 +117,12 @@
 #define AXIS2_DRIVER_IGOTO                1300          // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
 // 运行时设置覆盖范围 结束
 
-#define AXIS2_DRIVER_STATUS               OFF            // [可选] ON 启用驱动状态检测 OFF 关闭 HIGH 或 LOW 指定故障引脚有效电平
+#define AXIS2_DRIVER_STATUS               OFF            // OFF, ON, HIGH, LOW  驱动状态检测 ON 启用 OFF 关闭 HIGH/LOW 指定故障有效电平
 
 #define AXIS2_DRIVER_DECAY                STEALTHCHOP   // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
 #define AXIS2_DRIVER_DECAY_GOTO           SPREADCYCLE   // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
 
-#define AXIS2_POWER_DOWN                  OFF           // [可选] ON 停止运动后延时关闭电机 OFF 不因空闲自动关闭
+#define AXIS2_POWER_DOWN                  OFF           // OFF, ON  ON 停止运动后延时关闭电机 OFF 不因空闲自动关闭
                                                         //        默认停止 30 秒后断电 低速导星后延长至 10 分钟
 
 #define AXIS2_SENSE_HOME                  HIGH          // [可选] HIGH 或 LOW 用于启用并指定从上方观察时顺时针方向的原点状态
@@ -140,7 +140,7 @@
                                                         //        ALTAZM 地平式架台和多布森式等
                                                         //        ALTAZM_UNL 方位轴可无限旋转的 ALTAZM
 
-#define MOUNT_ALTERNATE_ORIENTATION       OFF           // [可选] ON 允许叉式架台翻转或地平式架台越过天顶 OFF 禁用这些动作
+#define MOUNT_ALTERNATE_ORIENTATION       OFF           // OFF, ON  ON 允许叉式架台翻转或地平式架台越过天顶 OFF 禁用这些动作
                                                         //        GEM 模式忽略此设置
 
 #define MOUNT_STARTUP_MODE                SA_AUTO       // [可选] SA_STRICT 或 SA_PERMISSIVE 控制启动时何时授予位置可信状态
@@ -151,17 +151,17 @@
                                                         //        如需在两极也应用大气折射修正 请使用 TOPO_STRICT
                                                         //        如不使用大气折射修正 请使用 OBSERVED_PLACE
 
-#define MOUNT_COORDS_MEMORY               OFF           // [可选] ON 断电保存近似坐标 OFF 不保存近似坐标
+#define MOUNT_COORDS_MEMORY               OFF           // OFF, ON  ON 断电保存近似坐标 OFF 不保存近似坐标
                                                         //        需要 FRAM 非易失性存储器 且断电期间架台不得移动
 
-#define MOUNT_ENABLE_IN_STANDBY           OFF           // [少改] ON 待机时使能电机 OFF 不因待机而使能电机
+#define MOUNT_ENABLE_IN_STANDBY           OFF           // OFF, ON  ON 待机时使能电机 OFF 不因待机而使能电机
 
 // 回零策略与电机保持
-#define HOME_REQUIRED_ON_BOOT             ON            // ON：开机后须先 Home/Set Home 才能正常 GOTO/跟踪；
+#define HOME_REQUIRED_ON_BOOT             ON            // OFF, ON  ON：开机后须先 Home/Set Home 才能正常 GOTO/跟踪；
                                                         // OFF：沿用原版启动位置假定
-#define HOME_REQUIRED_AFTER_LIMIT         ON            // ON：物理限位后须 Home/Set Home 恢复；
+#define HOME_REQUIRED_AFTER_LIMIT         ON            // OFF, ON  ON：物理限位后须 Home/Set Home 恢复；
                                                         // OFF：限位仍停止运动，但不强制重新回零
-#define MOTOR_HOLD_ON_BOOT                ON            // ON：开机仅使能电机保持；
+#define MOTOR_HOLD_ON_BOOT                ON            // OFF, ON  ON：开机仅使能电机保持；
                                                         // OFF：不额外使能电机（不改变上述回零策略）
 
 // --- 回零确认 ---
@@ -184,35 +184,35 @@
 
 // --- 状态指示 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#STATUS
-#define STATUS_MOUNT_LED                  ON            // [可选] ON 启用运动指示灯 随速率闪烁 转动时常亮 OFF 关闭
-#define STATUS_BUZZER                     OFF           // [可选] ON 使用压电蜂鸣器 OFF 禁用声音输出 数值 100..6000 指定频率 Hz
-#define STATUS_BUZZER_DEFAULT             OFF           // [可选] ON 默认开启提示音 OFF 默认静音
-#define STATUS_BUZZER_MEMORY              OFF           // [可选] ON 断电保存声音开关 OFF 每次开机使用默认声音设置
+#define STATUS_MOUNT_LED                  ON            // OFF, ON  ON 启用运动指示灯 随速率闪烁 转动时常亮 OFF 关闭
+#define STATUS_BUZZER                     OFF           // OFF, ON, 100..6000  OFF 禁用声音 ON 使用压电蜂鸣器 数值指定扬声器频率 Hz
+#define STATUS_BUZZER_DEFAULT             OFF           // OFF, ON  ON 默认开启提示音 OFF 默认静音
+#define STATUS_BUZZER_MEMORY              OFF           // OFF, ON  ON 断电保存声音开关 OFF 每次开机使用默认声音设置
 
 // --- ST4 接口 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#ST4
 // *** 请自行确认接口符合所有已连接设备的电气规范 使用风险由用户自行承担 ***
-#define ST4_INTERFACE                     ON            // [可选] ON 启用 ST4 接口 OFF 禁用接口 非手控模式下导星不超过 1 倍速
+#define ST4_INTERFACE                     ON            // OFF, ON  ON 启用 ST4 接口 OFF 禁用接口 非手控模式下导星不超过 1 倍速
                                                         //        自动寻星期间按下按钮可中止转动 或继续执行中天翻转在原点的暂停
-#define ST4_HOME_BUTTON                   ON            // ON 赤经东西双键长按三秒回零 OFF 禁用此快捷操作
+#define ST4_HOME_BUTTON                   ON            // OFF, ON  ON 赤经东西双键长按三秒回零 OFF 禁用此快捷操作
                                                         //        需同时启用 ST4_INTERFACE ST4_HAND_CONTROL 和 GOTO_FEATURE
-#define ST4_HAND_CONTROL                  ON            // [可选] ON 启用手控组合键和 SHC OFF 仅使用普通 ST4 导星
+#define ST4_HAND_CONTROL                  ON            // OFF, ON  ON 启用手控组合键和 SHC OFF 仅使用普通 ST4 导星
                                                         //        同时按住 [E]+[W] 超过 2 秒 导星速率 [E]- [W]+ [N] 跟踪开关 [S] 同步
                                                         //        同时按住 [N]+[S] 超过 2 秒 用户目录项 [E]- [W]+ [N] 自动寻星 [S] 声音开关
-#define ST4_HAND_CONTROL_FOCUSER          OFF           // [可选] ON 南北双键模式用于调焦 OFF 用于原有目录和声音控制
+#define ST4_HAND_CONTROL_FOCUSER          OFF           // OFF, ON  ON 南北双键模式用于调焦 OFF 用于原有目录和声音控制
                                                         //        [E] 选调焦器1 [W] 选调焦器2 [N] 和 [S] 控制调焦方向
 
 // --- 导星行为 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#GUIDING
 #define GUIDE_TIME_LIMIT                  0             // [调整] 时间限制 n=0..120 秒 使用 0 禁用
-#define GUIDE_DISABLE_BACKLASH            OFF           // [可选] ON 低速脉冲导星时停用回差补偿 OFF 保留回差补偿
+#define GUIDE_DISABLE_BACKLASH            OFF           // OFF, ON  ON 低速脉冲导星时停用回差补偿 OFF 保留回差补偿
 
 // --- 限位 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#LIMITS
 #define LIMIT_SENSE                       OFF           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
-#define LIMIT_RECOVERY                    OFF           // [可选] ON 脱困 GOTO 时暂缓相关软件限位 1 秒 OFF 不暂缓限位
+#define LIMIT_RECOVERY                    OFF           // OFF, ON  ON 脱困 GOTO 时暂缓相关软件限位 1 秒 OFF 不暂缓限位
                                                         //        适用于地平线 天顶 中天及轴1最小或最大软件限位
-#define LIMIT_RECOVERY_WITH_TRACKING      OFF           // [可选] ON 脱困成功后请求开启跟踪 OFF 不额外请求跟踪
+#define LIMIT_RECOVERY_WITH_TRACKING      OFF           // OFF, ON  ON 脱困成功后请求开启跟踪 OFF 不额外请求跟踪
                                                         //        仅在 LIMIT_RECOVERY 为 ON 时生效
 
 // --- 停放 ---
@@ -234,38 +234,38 @@
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#TRACKING
 #define TRACK_BACKLASH_RATE               25            // [可选] 其中 n=2..50 表示回差补偿期间的恒星时速率倍数
                                                         //        过快会导致电机失步或齿轮撞击 过慢会使回差补偿迟缓
-#define TRACK_AUTOSTART                   OFF           // [可选] ON 开机尝试自动跟踪 OFF 不自动开启跟踪
+#define TRACK_AUTOSTART                   OFF           // OFF, ON  ON 开机尝试自动跟踪 OFF 不自动开启跟踪
 #define TRACK_COMPENSATION_DEFAULT        OFF           // [可选] 不补偿 或 REFRACTION, REFRACTION_DUAL, MODEL, MODEL_DUAL
-#define TRACK_COMPENSATION_MEMORY         OFF           // [可选] ON 断电保存跟踪补偿模式 OFF 每次开机使用默认模式
+#define TRACK_COMPENSATION_MEMORY         OFF           // OFF, ON  ON 断电保存跟踪补偿模式 OFF 每次开机使用默认模式
 
 // --- 转动行为 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#SLEWING
 #define SLEW_RATE_BASE_DESIRED            6.0           // [必填] 期望转动速率 单位为度每秒 运行时可在此速率的
                                                         //        1/2 至 2 倍范围内调整 并应考虑性能要求
-#define SLEW_RATE_MEMORY                  ON            // [可选] ON 断电保存转动速率 OFF 每次开机使用默认速率
+#define SLEW_RATE_MEMORY                  ON            // OFF, ON  ON 断电保存转动速率 OFF 每次开机使用默认速率
 #define SLEW_ACCELERATION_DIST            5.0           // [调整] 单位为度 加速和减速所需的大致距离
 #define SLEW_RAPID_STOP_DIST              2.0           // [调整] 单位为度 中止转动或超过限位时停止所需的大致距离
-#define GOTO_FEATURE                      ON            // [少改] ON 启用架台自动寻星 OFF 禁用自动寻星
+#define GOTO_FEATURE                      ON            // OFF, ON  ON 启用架台自动寻星 OFF 禁用自动寻星
 #define GOTO_OFFSET                       0.25          // [调整] 自动寻星目标单向接近的偏移量 单位为度 0.0 表示禁用
-#define GOTO_OFFSET_ALIGN                 OFF           // [可选] ON 校准星 GOTO 跳过最后偏置接近阶段 OFF 完整执行该阶段
+#define GOTO_OFFSET_ALIGN                 OFF           // OFF, ON  ON 校准星 GOTO 跳过最后偏置接近阶段 OFF 完整执行该阶段
 
 // --- 基座侧行为 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#PIERSIDE
 #define MFLIP_HOME_DEFAULT                OFF           // [可选] OFF, VISIT, PAUSE 选择中天翻转时的原点路径点行为
                                                         //        OFF 直接前往 VISIT 经过原点 PAUSE 在原点等待
-#define MFLIP_HOME_MEMORY                 OFF           // [可选] ON 断电保存翻转原点模式 OFF 每次开机使用默认模式
-#define MFLIP_AUTOMATIC_DEFAULT           OFF           // [可选] ON 默认开启自动中天翻转 OFF 默认关闭
-#define MFLIP_AUTOMATIC_MEMORY            OFF           // [可选] ON 断电保存自动翻转开关 OFF 每次开机使用默认设置
+#define MFLIP_HOME_MEMORY                 OFF           // OFF, ON  ON 断电保存翻转原点模式 OFF 每次开机使用默认模式
+#define MFLIP_AUTOMATIC_DEFAULT           OFF           // OFF, ON  ON 默认开启自动中天翻转 OFF 默认关闭
+#define MFLIP_AUTOMATIC_MEMORY            OFF           // OFF, ON  ON 断电保存自动翻转开关 OFF 每次开机使用默认设置
 
-#define PIER_SIDE_SYNC_CHANGE_SIDES       OFF           // [可选] ON 同步时允许改变 GEM 基座侧 OFF 保持当前侧
+#define PIER_SIDE_SYNC_CHANGE_SIDES       OFF           // OFF, ON  ON 同步时允许改变 GEM 基座侧 OFF 保持当前侧
 #define PIER_SIDE_PREFERRED_DEFAULT       EAST          // [可选] BEST 尽可能保持当前侧 EAST 或 WEST 则尽可能切换到指定侧
                                                         //        AUTOMATIC 在接近下极子午线时优先西侧 否则优先东侧
-#define PIER_SIDE_PREFERRED_MEMORY        OFF           // [可选] ON 断电保存首选基座侧 OFF 每次开机使用默认首选侧
+#define PIER_SIDE_PREFERRED_MEMORY        OFF           // OFF, ON  ON 断电保存首选基座侧 OFF 每次开机使用默认首选侧
 
 // --- 校准 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#ALIGN
-#define ALIGN_AUTO_HOME                   OFF           // [可选] ON 校准前执行回零 OFF 按当前位置设置原点后校准
-#define ALIGN_MODEL_MEMORY                OFF           // [可选] ON 开机恢复已保存的指向模型 OFF 不自动恢复模型
+#define ALIGN_AUTO_HOME                   OFF           // OFF, ON  ON 校准前执行回零 OFF 按当前位置设置原点后校准
+#define ALIGN_MODEL_MEMORY                OFF           // OFF, ON  ON 开机恢复已保存的指向模型 OFF 不自动恢复模型
 #define ALIGN_MAX_STARS                   AUTO          // [少改] 使用 HAL 指定的默认值 6 颗或 9 颗星
                                                         //        也可使用 n 其中 n=1 仅用于同步 或 3 到 9 用于自动寻星辅助
 
@@ -286,7 +286,7 @@
 // 运行时设置覆盖范围 开始
 #define AXIS3_STEPS_PER_DEGREE            64.0          // [调整] 旋转器或消旋器的每度步数
                                                         //        高度方位消旋 n = (圆周像素数 * 2)/360 为最小值
-#define AXIS3_REVERSE                     OFF           // [可选] ON 反转电机运动方向 OFF 使用默认方向
+#define AXIS3_REVERSE                     OFF           // OFF, ON  ON 反转电机运动方向 OFF 使用默认方向
 #define AXIS3_LIMIT_MIN                   -180          // [少改] 其中 n=-360..0 单位为度 表示允许的最小旋转器角度
 #define AXIS3_LIMIT_MAX                   180           // [少改] 其中 n=0..360 单位为度 表示允许的最大旋转器角度
 
@@ -299,12 +299,12 @@
 #define AXIS3_DRIVER_IGOTO                OFF           // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
 // 运行时设置覆盖范围 结束
 
-#define AXIS3_DRIVER_STATUS               OFF           // [可选] ON 启用驱动状态检测 OFF 关闭 HIGH 或 LOW 指定故障引脚有效电平
+#define AXIS3_DRIVER_STATUS               OFF           // OFF, ON, HIGH, LOW  驱动状态检测 ON 启用 OFF 关闭 HIGH/LOW 指定故障有效电平
 
 #define AXIS3_DRIVER_DECAY                OFF           // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
 #define AXIS3_DRIVER_DECAY_GOTO           OFF           // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
 
-#define AXIS3_POWER_DOWN                  OFF           // [可选] ON 停止运动后延时关闭电机 OFF 不因空闲自动关闭
+#define AXIS3_POWER_DOWN                  OFF           // OFF, ON  ON 停止运动后延时关闭电机 OFF 不因空闲自动关闭
                                                         //        默认停止 30 秒后断电
 
 #define AXIS3_SENSE_HOME                  OFF           // [可选] HIGH 或 LOW 用于启用并指定从上方观察时顺时针方向的原点状态
@@ -328,7 +328,7 @@
 // 如果已启用轴运行时设置 则会忽略下方配置 可在 SWS 中禁用或清除 NV/EEPROM
 // 运行时设置覆盖范围 开始
 #define AXIS4_STEPS_PER_MICRON            0.5           // [调整] 每微米步数 可通过测试或其他方法确定
-#define AXIS4_REVERSE                     OFF           // [可选] ON 反转电机运动方向 OFF 使用默认方向
+#define AXIS4_REVERSE                     OFF           // OFF, ON  ON 反转电机运动方向 OFF 使用默认方向
 #define AXIS4_LIMIT_MIN                   0             // [调整] 其中 n=0..500 单位为毫米 表示允许的最小位置
 #define AXIS4_LIMIT_MAX                   80            // [调整] 其中 n=0..500 单位为毫米 表示允许的最大位置
 
@@ -341,12 +341,12 @@
 #define AXIS4_DRIVER_IGOTO                OFF           // [可选] 单位为 mA 覆盖转动时的运行电流 OFF 使用 IRUN
 // 运行时设置覆盖范围 结束
 
-#define AXIS4_DRIVER_STATUS               OFF           // [可选] ON 启用驱动状态检测 OFF 关闭 HIGH 或 LOW 指定故障引脚有效电平
+#define AXIS4_DRIVER_STATUS               OFF           // OFF, ON, HIGH, LOW  驱动状态检测 ON 启用 OFF 关闭 HIGH/LOW 指定故障有效电平
 
 #define AXIS4_DRIVER_DECAY                OFF           // [少改] 覆盖跟踪时的默认衰减模式 TMC 默认为 STEALTHCHOP
 #define AXIS4_DRIVER_DECAY_GOTO           OFF           // [少改] 覆盖自动寻星时的默认衰减模式 TMC 默认为 SPREADCYCLE
 
-#define AXIS4_POWER_DOWN                  OFF           // [可选] ON 停止运动后延时关闭电机 OFF 不因空闲自动关闭
+#define AXIS4_POWER_DOWN                  OFF           // OFF, ON  ON 停止运动后延时关闭电机 OFF 不因空闲自动关闭
                                                         //        默认停止 30 秒后断电
 
 #define AXIS4_SENSE_HOME                  OFF           // [可选] HIGH 或 LOW 用于启用并指定从上方观察时顺时针方向的原点状态
@@ -372,64 +372,64 @@
 #define FEATURE1_NAME                     "FEATURE1"    // [调整] 受控功能的名称
 #define FEATURE1_TEMP                     OFF           // [调整] THERMISTOR 或 n 其中 n 为 ds18b20 序列号 用于 DEW_HEATER 温度
 #define FEATURE1_PIN                      OFF           // [调整] AUX 表示辅助引脚 n 表示引脚编号
-#define FEATURE1_VALUE_DEFAULT            OFF           // [调整] ON 默认开启 OFF 默认关闭 模拟输出填写 0..255
-#define FEATURE1_VALUE_MEMORY             OFF           // [调整] ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
+#define FEATURE1_VALUE_DEFAULT            OFF           // OFF, ON, 0..255  默认输出状态 OFF 关闭 ON 开启 数值用于模拟输出
+#define FEATURE1_VALUE_MEMORY             OFF           // OFF, ON  ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
 #define FEATURE1_ON_STATE                 HIGH          // [调整] LOW 表示反转逻辑 使 ON 为 0V 而 OFF 为 Vcc 通常为 3.3V
 
 #define FEATURE2_PURPOSE                  OFF           // [可选] SWITCH, MOMENTARY_SWITCH, ANALOG_OUT, DEW_HEATER, INTERVALOMETER
 #define FEATURE2_NAME                     "FEATURE2"    // [调整] 受控功能的名称
 #define FEATURE2_TEMP                     OFF           // [调整] THERMISTOR 或 n 其中 n 为 ds18b20 序列号 用于 DEW_HEATER 温度
 #define FEATURE2_PIN                      OFF           // [调整] AUX 表示辅助引脚 n 表示引脚编号
-#define FEATURE2_VALUE_DEFAULT            OFF           // [调整] ON 默认开启 OFF 默认关闭 模拟输出填写 0..255
-#define FEATURE2_VALUE_MEMORY             OFF           // [调整] ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
+#define FEATURE2_VALUE_DEFAULT            OFF           // OFF, ON, 0..255  默认输出状态 OFF 关闭 ON 开启 数值用于模拟输出
+#define FEATURE2_VALUE_MEMORY             OFF           // OFF, ON  ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
 #define FEATURE2_ON_STATE                 HIGH          // [调整] LOW 表示反转逻辑 使 ON 为 0V 而 OFF 为 Vcc 通常为 3.3V
 
 #define FEATURE3_PURPOSE                  OFF           // [可选] SWITCH, MOMENTARY_SWITCH, ANALOG_OUT, DEW_HEATER, INTERVALOMETER
 #define FEATURE3_NAME                     "FEATURE3"    // [调整] 受控功能的名称
 #define FEATURE3_TEMP                     OFF           // [调整] THERMISTOR 或 n 其中 n 为 ds18b20 序列号 用于 DEW_HEATER 温度
 #define FEATURE3_PIN                      OFF           // [调整] AUX 表示辅助引脚 n 表示引脚编号
-#define FEATURE3_VALUE_DEFAULT            OFF           // [调整] ON 默认开启 OFF 默认关闭 模拟输出填写 0..255
-#define FEATURE3_VALUE_MEMORY             OFF           // [调整] ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
+#define FEATURE3_VALUE_DEFAULT            OFF           // OFF, ON, 0..255  默认输出状态 OFF 关闭 ON 开启 数值用于模拟输出
+#define FEATURE3_VALUE_MEMORY             OFF           // OFF, ON  ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
 #define FEATURE3_ON_STATE                 HIGH          // [调整] LOW 表示反转逻辑 使 ON 为 0V 而 OFF 为 Vcc 通常为 3.3V
 
 #define FEATURE4_PURPOSE                  OFF           // [可选] SWITCH, MOMENTARY_SWITCH, ANALOG_OUT, DEW_HEATER, INTERVALOMETER
 #define FEATURE4_NAME                     "FEATURE4"    // [调整] 受控功能的名称
 #define FEATURE4_TEMP                     OFF           // [调整] THERMISTOR 或 n 其中 n 为 ds18b20 序列号 用于 DEW_HEATER 温度
 #define FEATURE4_PIN                      OFF           // [调整] AUX 表示辅助引脚 n 表示引脚编号
-#define FEATURE4_VALUE_DEFAULT            OFF           // [调整] ON 默认开启 OFF 默认关闭 模拟输出填写 0..255
-#define FEATURE4_VALUE_MEMORY             OFF           // [调整] ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
+#define FEATURE4_VALUE_DEFAULT            OFF           // OFF, ON, 0..255  默认输出状态 OFF 关闭 ON 开启 数值用于模拟输出
+#define FEATURE4_VALUE_MEMORY             OFF           // OFF, ON  ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
 #define FEATURE4_ON_STATE                 HIGH          // [调整] LOW 表示反转逻辑 使 ON 为 0V 而 OFF 为 Vcc 通常为 3.3V
 
 #define FEATURE5_PURPOSE                  OFF           // [可选] SWITCH, MOMENTARY_SWITCH, ANALOG_OUT, DEW_HEATER, INTERVALOMETER
 #define FEATURE5_NAME                     "FEATURE5"    // [调整] 受控功能的名称
 #define FEATURE5_TEMP                     OFF           // [调整] THERMISTOR 或 n 其中 n 为 ds18b20 序列号 用于 DEW_HEATER 温度
 #define FEATURE5_PIN                      OFF           // [调整] AUX 表示辅助引脚 n 表示引脚编号
-#define FEATURE5_VALUE_DEFAULT            OFF           // [调整] ON 默认开启 OFF 默认关闭 模拟输出填写 0..255
-#define FEATURE5_VALUE_MEMORY             OFF           // [调整] ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
+#define FEATURE5_VALUE_DEFAULT            OFF           // OFF, ON, 0..255  默认输出状态 OFF 关闭 ON 开启 数值用于模拟输出
+#define FEATURE5_VALUE_MEMORY             OFF           // OFF, ON  ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
 #define FEATURE5_ON_STATE                 HIGH          // [调整] LOW 表示反转逻辑 使 ON 为 0V 而 OFF 为 Vcc 通常为 3.3V
 
 #define FEATURE6_PURPOSE                  OFF           // [可选] SWITCH, MOMENTARY_SWITCH, ANALOG_OUT, DEW_HEATER, INTERVALOMETER
 #define FEATURE6_NAME                     "FEATURE6"    // [调整] 受控功能的名称
 #define FEATURE6_TEMP                     OFF           // [调整] THERMISTOR 或 n 其中 n 为 ds18b20 序列号 用于 DEW_HEATER 温度
 #define FEATURE6_PIN                      OFF           // [调整] AUX 表示辅助引脚 n 表示引脚编号
-#define FEATURE6_VALUE_DEFAULT            OFF           // [调整] ON 默认开启 OFF 默认关闭 模拟输出填写 0..255
-#define FEATURE6_VALUE_MEMORY             OFF           // [调整] ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
+#define FEATURE6_VALUE_DEFAULT            OFF           // OFF, ON, 0..255  默认输出状态 OFF 关闭 ON 开启 数值用于模拟输出
+#define FEATURE6_VALUE_MEMORY             OFF           // OFF, ON  ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
 #define FEATURE6_ON_STATE                 HIGH          // [调整] LOW 表示反转逻辑 使 ON 为 0V 而 OFF 为 Vcc 通常为 3.3V
 
 #define FEATURE7_PURPOSE                  OFF           // [可选] SWITCH, MOMENTARY_SWITCH, ANALOG_OUT, DEW_HEATER, INTERVALOMETER
 #define FEATURE7_NAME                     "FEATURE7"    // [调整] 受控功能的名称
 #define FEATURE7_TEMP                     OFF           // [调整] THERMISTOR 或 n 其中 n 为 ds18b20 序列号 用于 DEW_HEATER 温度
 #define FEATURE7_PIN                      OFF           // [调整] AUX 表示辅助引脚 n 表示引脚编号
-#define FEATURE7_VALUE_DEFAULT            OFF           // [调整] ON 默认开启 OFF 默认关闭 模拟输出填写 0..255
-#define FEATURE7_VALUE_MEMORY             OFF           // [调整] ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
+#define FEATURE7_VALUE_DEFAULT            OFF           // OFF, ON, 0..255  默认输出状态 OFF 关闭 ON 开启 数值用于模拟输出
+#define FEATURE7_VALUE_MEMORY             OFF           // OFF, ON  ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
 #define FEATURE7_ON_STATE                 HIGH          // [调整] LOW 表示反转逻辑 使 ON 为 0V 而 OFF 为 Vcc 通常为 3.3V
 
 #define FEATURE8_PURPOSE                  OFF           // [可选] SWITCH, MOMENTARY_SWITCH, ANALOG_OUT, DEW_HEATER, INTERVALOMETER
 #define FEATURE8_NAME                     "FEATURE8"    // [调整] 受控功能的名称
 #define FEATURE8_TEMP                     OFF           // [调整] THERMISTOR 或 n 其中 n 为 ds18b20 序列号 用于 DEW_HEATER 温度
 #define FEATURE8_PIN                      OFF           // [调整] AUX 表示辅助引脚 n 表示引脚编号
-#define FEATURE8_VALUE_DEFAULT            OFF           // [调整] ON 默认开启 OFF 默认关闭 模拟输出填写 0..255
-#define FEATURE8_VALUE_MEMORY             OFF           // [调整] ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
+#define FEATURE8_VALUE_DEFAULT            OFF           // OFF, ON, 0..255  默认输出状态 OFF 关闭 ON 开启 数值用于模拟输出
+#define FEATURE8_VALUE_MEMORY             OFF           // OFF, ON  ON 断电保存开关 模拟输出或除露状态 OFF 使用默认值
 #define FEATURE8_ON_STATE                 HIGH          // [调整] LOW 表示反转逻辑 使 ON 为 0V 而 OFF 为 Vcc 通常为 3.3V
 
 // --- - ---
