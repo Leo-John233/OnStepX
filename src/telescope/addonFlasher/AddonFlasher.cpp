@@ -22,8 +22,8 @@ extern HardwareSerial HWSerialB;
     void addonFlasherWrapper() { addonFlasher.poll(); }
   #endif
 
-  void AddonFlasher::init(bool (*canStart)()) {
-    this->canStart = canStart;
+  void AddonFlasher::init(bool (*prepare)()) {
+    this->prepare = prepare;
     VF("MSG: AddonFlasher, init gpio0="); V(ADDON_GPIO0_PIN); VF(", reset="); VL(ADDON_RESET_PIN);
     pinModeEx(ADDON_GPIO0_PIN, OUTPUT);
     pinModeEx(ADDON_RESET_PIN, OUTPUT);
@@ -38,9 +38,13 @@ extern HardwareSerial HWSerialB;
   }
 
   bool AddonFlasher::beginSession() {
-    // 串口命令和按钮入口使用同一检查
+    // 先锁定会话 再由使用方停止运动
     if (!canFlash()) return false;
     active = true;
+    if (prepare && !prepare()) {
+      active = false;
+      return false;
+    }
     #ifdef ADDON_RESET_SHARED_INPUT
       if (ADDON_GPIO0_PIN >= 0) savedBootLevel = digitalReadEx(ADDON_GPIO0_PIN);
     #endif
@@ -56,8 +60,10 @@ extern HardwareSerial HWSerialB;
     active = false;
   }
 
-  bool AddonFlasher::go(bool timeout) {
+  bool AddonFlasher::go(bool timeout, void (*onReady)()) {
     if (!beginSession()) return false;
+    // 停稳后才通知主机开始上传
+    if (onReady) onReady();
     // 波特率切换前发完待发送数据
     SERIAL_A.flush();
     SERIAL_PASSTHROUGH.flush();

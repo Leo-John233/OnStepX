@@ -36,6 +36,17 @@
   HAL_RESET_FUNC;
 #endif
 
+#if SERIAL_B_ESP_FLASHING == ON
+// 停稳后发送提示 并在切换波特率前发完数据
+static void addonFlashReady() {
+  SERIAL_A.println("The SWS microcontroller will now be placed in flash upload mode (at 115200 Baud.)");
+  SERIAL_A.println("Arduino's 'Tools -> Upload Speed' should be set to 115200 Baud.");
+  SERIAL_A.println("Waiting for data, you have 90 seconds to start the upload.");
+  SERIAL_A.flush();
+  delay(1000);
+}
+#endif
+
 bool Telescope::command(char reply[], char command[], char parameter[], bool *suppressFrame, bool *numericReply, CommandError *commandError) {
 
   #if PLUGIN1 != OFF && PLUGIN1_COMMAND_PROCESSING == ON
@@ -169,18 +180,8 @@ bool Telescope::command(char reply[], char command[], char parameter[], bool *su
     //            Return: 1 on completion (after up to one minute from start of command.)
     #if SERIAL_B_ESP_FLASHING == ON
       if (command[1] == 'S' && parameter[0] == 'P' && parameter[1] == 'F' && parameter[2] == 'L' && parameter[3] == 'A' && parameter[4] == 'S' && parameter[5] == 'H' && parameter[6] == 0) {
-        // 提示烧录前检查 共用引脚忙时保持原运行状态
-        if (!addonFlasher.canFlash()) {
-          *commandError = CE_SLEW_IN_MOTION;
-          return true;
-        }
-        SERIAL_A.println("The SWS microcontroller will now be placed in flash upload mode (at 115200 Baud.)");
-        SERIAL_A.println("Arduino's 'Tools -> Upload Speed' should be set to 115200 Baud.");
-        SERIAL_A.println("Waiting for data, you have one minute to start the upload.");
-        // 先发完提示 再切换波特率 等待期间不启动新的轴动作
-        SERIAL_A.flush();
-        delay(1000);
-        if (!addonFlasher.go()) {
+        // 主动停止运动 停稳失败时不切换串口和引脚
+        if (!addonFlasher.go(true, addonFlashReady)) {
           *commandError = CE_SLEW_IN_MOTION;
           return true;
         }

@@ -32,7 +32,7 @@ struct Port {
 #define SERIAL_PASSTHROUGH device
 struct AddonFlasher {
  int flashes=0,resumes=0;
- bool go(bool);
+ bool go(bool,void (*)()=nullptr);
  bool beginSession(){return true;}
  void endSession(){run(true);}
  void flash(){++flashes;}
@@ -156,18 +156,25 @@ struct Port {
         source('src/telescope/addonFlasher/AddonFlasher.cpp') + r'''
 int main(){
  static bool allowed=false;
- addonFlasher.init([](){return allowed;});
+ addonFlasher.init([](){assert(!addonFlasher.canFlash());return allowed;});
  assert(modes[2]==INPUT_PULLUP);
  levels[26]=LOW;
  uint32_t before=now;
  assert(!addonFlasher.go(true));
  assert(now==before&&levels[26]==LOW&&modes[2]==INPUT_PULLUP);
  assert(host.baud==9600&&device.baud==9600);
+ assert(addonFlasher.canFlash());
  allowed=true;
  for(int saved=LOW;saved<=HIGH;++saved){
   levels[26]=saved;host.input={0,255,192,219};device.input={192,0,255,219};
   host.output.clear();device.output.clear();checking=true;
-  assert(addonFlasher.go(true));checking=false;
+  static bool notified=false;notified=false;
+  assert(addonFlasher.go(true, [](){
+   assert(!addonFlasher.canFlash());
+   assert(host.baud==9600&&device.baud==9600);
+   notified=true;
+  }));checking=false;
+  assert(notified);
   assert(host.output==std::vector<int>({192,0,255,219}));
   assert(device.output==std::vector<int>({0,255,192,219}));
   assert(host.baud==9600&&device.baud==9600);
@@ -180,32 +187,70 @@ int main(){
 
 
 def admission(cxx):
-    run(cxx, 'addon_mount_admission', r'''
+    run(cxx, 'addon_mount_stop_before_flash', r'''
 #include <cassert>
+#include <cstdint>
 #define MOUNT_PRESENT
 #define ADDON_RESET_SHARED_INPUT
+#define STEP_DIR_TMC_SPI_PRESENT
+#define AXIS1_M2_PIN 23
+#define AXIS2_M2_PIN 5
+#define HIGH 1
 enum {HS_NONE=0,GS_NONE=0,GU_NONE=0};
+uint32_t now=0;
+uint32_t millis(){return now;}
+void delay(int ms){now+=ms;}
+bool stuck=false;
+int releases=0,polls=0;
 struct Mount {
- bool tracking=false,slewing=false;
- bool isTracking(){return tracking;}
+ bool trackingOn=true,slewing=true;
+ bool isTracking(){return trackingOn;}
  bool isSlewing(){return slewing;}
+ void tracking(bool on){assert(!on);trackingOn=on;}
 } mount;
-struct State {int state=0;} home,goTo,guide;
-struct Axis {float rate=0;float getFrequencySteps(){return rate;}} axis1,axis2;
-''' + method('src/telescope/Telescope.cpp', 'bool addonFlashCanStart(') + r'''
-int main(){
- assert(addonFlashCanStart());
- mount.tracking=true;assert(!addonFlashCanStart());mount.tracking=false;
- mount.slewing=true;assert(!addonFlashCanStart());mount.slewing=false;
- for(auto p:{&home.state,&goTo.state,&guide.state}){
-  *p=1;assert(!addonFlashCanStart());*p=0;
+struct State {
+ int state=1,aborts=0;
+ void abort(){++aborts;}
+ void abort(bool safety){assert(safety);++aborts;}
+ void poll(){++polls;}
+} home,goTo,guide;
+struct Axis {
+ float rate=50;int aborts=0;
+ float getFrequencySteps(){return rate;}
+ void autoSlewAbort(){++aborts;}
+} axis1,axis2;
+struct Tasks {
+ void yield(){
+  assert(home.aborts&&goTo.aborts&&guide.aborts);
+  assert(axis1.aborts&&axis2.aborts&&!mount.trackingOn);
+  if(!stuck){
+   mount.slewing=false;
+   home.state=goTo.state=guide.state=0;
+   axis1.rate=axis2.rate=0;
+  }
  }
- for(auto p:{&axis1.rate,&axis2.rate}) for(float rate:{-0.01F,0.01F}){
-  *p=rate;assert(!addonFlashCanStart());*p=0;
- }
- assert(addonFlashCanStart());
+} tasks;
+void digitalWriteEx(int p,int v){
+ assert((p==23||p==5)&&v==HIGH);
+ assert(!mount.isTracking()&&!mount.isSlewing());
+ assert(home.state==0&&goTo.state==0&&guide.state==0);
+ assert(axis1.rate==0&&axis2.rate==0);
+ ++releases;
 }
-'''.replace('int main(){', '#include <initializer_list>\nint main(){'))
+''' + method('src/telescope/Telescope.cpp', 'bool addonFlashPrepare(') + r'''
+int main(){
+ assert(addonFlashPrepare());
+ assert(now==1&&polls==1&&releases==2);
+ assert(!mount.trackingOn);
+ for(int wrap=0;wrap<2;++wrap){
+  stuck=true;axis2.rate=1;releases=0;
+  now=wrap?0xfffffff0U:0;
+  uint32_t start=now;
+  assert(!addonFlashPrepare());
+  assert(uint32_t(now-start)==30000U&&releases==0);
+ }
+}
+''')
 
 
 if __name__ == '__main__':

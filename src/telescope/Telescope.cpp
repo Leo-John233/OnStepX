@@ -35,16 +35,34 @@ bool xBusy = false;
 InitError initError;
 
 #if SERIAL_B_ESP_FLASHING == ON
-// 架台侧提供准入检查 烧录模块不依赖架台实现
-bool addonFlashCanStart() {
-  #if defined(MOUNT_PRESENT) && defined(ADDON_RESET_SHARED_INPUT)
-    // 停稳后进入烧录 不强制中断回零 导星或 GOTO
-    return !mount.isTracking() && !mount.isSlewing() && home.state == HS_NONE &&
-           goTo.state == GS_NONE && guide.state == GU_NONE &&
-           axis1.getFrequencySteps() == 0.0F && axis2.getFrequencySteps() == 0.0F;
-  #else
-    return true;
+// 只在进入透传时调用 正常控制流程不依赖烧录状态
+bool addonFlashPrepare() {
+  #ifdef MOUNT_PRESENT
+    // 使用原有中止流程 保留坐标和回零失败状态
+    home.abort();
+    goTo.abort(true);
+    guide.abort();
+    mount.tracking(false);
+    axis1.autoSlewAbort();
+    axis2.autoSlewAbort();
+
+    // 减速和状态收尾期间仍运行任务 停稳后才接管引脚
+    const uint32_t started = millis();
+    while (mount.isTracking() || mount.isSlewing() || home.state != HS_NONE ||
+           goTo.state != GS_NONE || guide.state != GU_NONE ||
+           axis1.getFrequencySteps() != 0.0F || axis2.getFrequencySteps() != 0.0F) {
+      if ((uint32_t)(millis() - started) >= 30000U) return false;
+      tasks.yield();
+      home.poll();
+      delay(1);
+    }
   #endif
+  #if defined(ADDON_RESET_SHARED_INPUT) && defined(STEP_DIR_TMC_SPI_PRESENT)
+    // 片选保持无效 防止驱动器占用共用复位线路
+    digitalWriteEx(AXIS1_M2_PIN, HIGH);
+    digitalWriteEx(AXIS2_M2_PIN, HIGH);
+  #endif
+  return true;
 }
 #endif
 
@@ -243,7 +261,7 @@ void Telescope::init(const char *fwName, int fwMajor, int fwMinor, const char *f
   #endif
   
   #if SERIAL_B_ESP_FLASHING == ON
-    addonFlasher.init(addonFlashCanStart);
+    addonFlasher.init(addonFlashPrepare);
   #endif
 
   mcuTemperature = HAL_TEMP();
