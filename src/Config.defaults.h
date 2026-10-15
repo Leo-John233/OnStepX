@@ -796,7 +796,7 @@
 #define ST4_INTERFACE                       OFF            // ON 启用接口 非手控模式下导星速率不超过 1 倍速
 #endif
 #ifndef ST4_INTERFACE_INIT
-#define ST4_INTERFACE_INIT                  INPUT_PULLUP   // ST4 使用板上外部上拉
+#define ST4_INTERFACE_INIT                  INPUT_PULLUP   // ST4 默认使用上拉输入
 #endif
 #ifndef ST4_HAND_CONTROL
 #define ST4_HAND_CONTROL                    OFF            // ON 启用手控器特殊功能和 SHC 支持

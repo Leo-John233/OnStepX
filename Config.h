@@ -87,7 +87,6 @@
 #define AXIS1_POWER_DOWN                  OFF           // [少改] ON 运动停止 30 秒后关闭电源 或最后一次不超过 1 倍速导星 10 分钟后关闭电源
 
 #define AXIS1_SENSE_HOME                  LOW           // [可选] HIGH 或 LOW 用于启用并指定从正面观察时顺时针方向的原点状态
-#define AXIS1_SENSE_LIMIT_INIT            INPUT         // 图纸限位引脚使用外部上拉
 #define AXIS1_SENSE_LIMIT_MIN             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
 #define AXIS1_SENSE_LIMIT_MAX             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
                                                         //        数字输入可选添加 |HYST(n) 其中 n=0..1023 表示稳定时间 单位为 ms
@@ -125,7 +124,6 @@
 #define AXIS2_POWER_DOWN                  OFF           // [可选] ON 运动停止 30 秒后关闭电源 或最后一次不超过 1 倍速导星 10 分钟后关闭电源
 
 #define AXIS2_SENSE_HOME                  HIGH          // [可选] HIGH 或 LOW 用于启用并指定从上方观察时顺时针方向的原点状态
-#define AXIS2_SENSE_LIMIT_INIT            INPUT         // 图纸限位引脚使用外部上拉
 #define AXIS2_SENSE_LIMIT_MIN             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
 #define AXIS2_SENSE_LIMIT_MAX             LOW           // [可选] 限位感应开关为 HIGH 或 LOW 状态时停止运动
 
@@ -195,7 +193,6 @@
 #define ST4_INTERFACE                     ON            // [可选] ON 启用接口 非手控模式下导星速率不超过 1 倍速
                                                         //        自动寻星期间按下按钮可中止转动 或继续执行中天翻转在原点的暂停
 #define ST4_HOME_BUTTON                   ON            // 赤经双键长按三秒回零
-#define ST4_INTERFACE_INIT                INPUT         // ST4 使用板上外部上拉
 #define ST4_HAND_CONTROL                  ON            // [可选] ON 启用手控器特殊功能和 SHC 支持
                                                         //        同时按住 [E]+[W] 超过 2 秒 导星速率 [E]- [W]+ [N] 跟踪开关 [S] 同步
                                                         //        同时按住 [N]+[S] 超过 2 秒 用户目录项 [E]- [W]+ [N] 自动寻星 [S] 声音开关

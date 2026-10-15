@@ -276,3 +276,38 @@ UART 分支不套用此 SPI 主板的 ESP07 接线 自定义烧录引脚仍可�
 使用 uint32_t 时间差处理毫秒计数回绕
 回归检查覆盖无数据等待 持续上传 空闲退出及计数回绕
 此修复需要重新编译并上传 OnStepX 到主控 ESP32 才会对 ESP07 透传烧录生效
+
+## 配置新增项复核 2026-10-15
+
+对照迁移前 5c986c5 并用仓库初始版本 124fc0f 核实内部选项来源
+这里的原生指仓库已有实现 不代表已核对外部最新版 OnStepX
+
+Config.h 相比迁移前额外增加 12 项 其中 9 项为用户确认保留的迁移配置
+
+| 分类 | 配置 | 处理 |
+| --- | --- | --- |
+| 回零速度和偏置 | HOME_FAST_RATE HOME_SLOW_RATE HOME_OFFSET_RATE HOME_OFFSET_AXIS1 HOME_OFFSET_AXIS2 | 保留原名 原值和完整注释 |
+| 回零策略和电机保持 | HOME_REQUIRED_ON_BOOT HOME_REQUIRED_AFTER_LIMIT MOTOR_HOLD_ON_BOOT | 保留独立分组 |
+| ST4 长按回零 | ST4_HOME_BUTTON | 保留 |
+| 原生限位内部选项 | AXIS1_SENSE_LIMIT_INIT AXIS2_SENSE_LIMIT_INIT | 删除 Config.h 中的额外覆盖 |
+| 原生 ST4 内部选项 | ST4_INTERFACE_INIT | 按用户选择删除额外覆盖 恢复 INPUT_PULLUP |
+
+两轴限位初始化仍由 Config.defaults.h 继承 LIMIT_SENSE_INIT
+其默认值为 INPUT_PULLUP GpioBase.h 对 ESP32 GPIO34 至 GPIO39 自动转换为 INPUT
+因此当前 GPIO36 和 GPIO39 仍使用外部上拉 无须在 Config.h 重复设置
+ST4 的 GPIO32 和 GPIO33 恢复内部上拉 GPIO34 和 GPIO35 仍由原生处理转换为 INPUT
+
+Extended.config.h 新增的 AXIS5_SLEW_RATE_MINIMUM 为原生选项
+其值 50 对应旧 OnStep 的 AXIS5_LIMIT_MIN_RATE 保留此数值迁移
+Config.defaults.h 中 HOST_NAME 的 OnStepX 默认值来自后续 a59874d 修改 本次不改动
+Constants.h 未发现去除注释和空白后的语义变化 Common.h 的相关变化为条件分行
+新增默认值和校验对应上述迁移配置 未增加另一个独立功能开关
+
+实现层保留已授权的回零偏置与中止判定 恢复锁 电机保持 独立限位反向退出
+ST4 长按回零 GOTO 成功与中断判定及其泊车和校准兼容修复
+独立限位的 500 毫秒释放等待对应旧 OnStep 的限位释放处理
+没有迁入旧 TMC2209 共用模式引脚保护 重复命令调度或旧附件库
+MaxESP3 引脚迁移及 MaxESP4 驱动分支和 ESPFLASH 独占会话属于用户后续单独要求
+
+本次只清理配置暴露和纠正 ST4 默认值注释 未回退已确认的迁移功能
+后续优先使用原生配置项迁入数值 不确定的语义差异先向用户确认
