@@ -47,6 +47,9 @@
 #ifndef ADDON_RESET_PIN
   #define ADDON_RESET_PIN              AUX2_PIN        // ESP8266 复位
 #endif
+#if defined(STEP_DIR_TMC_SPI_PRESENT) && ADDON_RESET_PIN == AUX2_PIN
+  #define ADDON_RESET_SHARED_INPUT                      // 烧录时接管共用引脚 结束后释放
+#endif
 
 // PEC 索引感应为逻辑电平输入 在上升沿复位 PEC 索引 随后等待 60 秒才允许再次复位
 #ifndef PEC_SENSE_PIN

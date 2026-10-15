@@ -105,6 +105,26 @@ int main(){}
 ''')
 
 
+    # MaxESP3 复用同一烧录流程 仅 SPI 共用复位时启用接管
+    pinmap = source('src/pinmaps/Pins.MaxESP3.h')
+    for mode in ('spi', 'uart', 'custom'):
+        defines = '#define STEP_DIR_TMC_SPI_PRESENT\n' if mode != 'uart' else '#define STEP_DIR_TMC_UART_PRESENT\n'
+        if mode == 'custom':
+            defines += '#define ADDON_RESET_PIN 32\n'
+        shared_check = '#ifndef' if mode == 'spi' else '#ifdef'
+        reset_pin = 32 if mode == 'custom' else 2
+        run(cxx, 'maxesp3_' + mode + '_addon', base + defines + pinmap + f'''
+{shared_check} ADDON_RESET_SHARED_INPUT
+#error Incorrect shared reset handling
+#endif
+static_assert(ADDON_GPIO0_PIN==26,"ESP07 GPIO0");
+static_assert(ADDON_RESET_PIN=={reset_pin},"ESP07 RST");
+static_assert(AXIS1_M3_PIN==2 && AXIS2_M3_PIN==2,"SPI MISO");
+static_assert(AXIS2_DIR_PIN==26,"Shared direction");
+int main(){{}}
+''')
+
+
 def lifecycle(cxx):
     # 直接编译完整烧录模块 验证双向字节和退出后的引脚恢复
     run(cxx, 'addon_full_lifecycle', r'''
