@@ -22,7 +22,8 @@ extern HardwareSerial HWSerialB;
     void addonFlasherWrapper() { addonFlasher.poll(); }
   #endif
 
-  void AddonFlasher::init() {
+  void AddonFlasher::init(bool (*canStart)()) {
+    this->canStart = canStart;
     VF("MSG: AddonFlasher, init gpio0="); V(ADDON_GPIO0_PIN); VF(", reset="); VL(ADDON_RESET_PIN);
     pinModeEx(ADDON_GPIO0_PIN, OUTPUT);
     pinModeEx(ADDON_RESET_PIN, OUTPUT);
@@ -36,7 +37,30 @@ extern HardwareSerial HWSerialB;
     #endif
   }
 
-  void AddonFlasher::go(bool timeout) {
+  bool AddonFlasher::beginSession() {
+    // 串口命令和按钮入口使用同一检查
+    if (!canFlash()) return false;
+    active = true;
+    #ifdef ADDON_RESET_SHARED_INPUT
+      if (ADDON_GPIO0_PIN >= 0) savedBootLevel = digitalReadEx(ADDON_GPIO0_PIN);
+    #endif
+    return true;
+  }
+
+  void AddonFlasher::endSession() {
+    // 先恢复正常启动和串口 再交还共用方向引脚
+    run(true);
+    #ifdef ADDON_RESET_SHARED_INPUT
+      digitalWriteEx(ADDON_GPIO0_PIN, savedBootLevel);
+    #endif
+    active = false;
+  }
+
+  bool AddonFlasher::go(bool timeout) {
+    if (!beginSession()) return false;
+    // 波特率切换前发完待发送数据
+    SERIAL_A.flush();
+    SERIAL_PASSTHROUGH.flush();
     // program mode and 115200 serial comms
     flash();
 
@@ -63,7 +87,8 @@ extern HardwareSerial HWSerialB;
         lastRead = millis();
         waitMs = 30000U;
       }
-      //tasks.yield();
+      // 仅让出系统执行时间 不运行会改写共用引脚的架台任务
+      ::yield();
 
       // 使用已过去的时间判断超时 兼容毫秒计数回绕
       if (timeout && (uint32_t)(millis() - lastRead) > waitMs) break;
@@ -71,7 +96,10 @@ extern HardwareSerial HWSerialB;
     VLF("MSG: AddonFlasher, serial passthrough deactivated");
 
     // back to run mode and normal serial comms
-    run(true);
+    SERIAL_A.flush();
+    SERIAL_PASSTHROUGH.flush();
+    endSession();
+    return true;
   }
 
   void AddonFlasher::run(bool setSerial) {
@@ -93,7 +121,7 @@ extern HardwareSerial HWSerialB;
       #else
         SERIAL_A.begin(SERIAL_A_BAUD_DEFAULT);
       #endif
-      tasks.yield(1000);
+      delay(1000);
     }
   }
 
@@ -111,33 +139,36 @@ extern HardwareSerial HWSerialB;
     #else
       SERIAL_PASSTHROUGH.begin(115200);
     #endif
-    tasks.yield(1000);
+    delay(1000);
 
     // enter program mode
     digitalWriteEx(ADDON_GPIO0_PIN, LOW);
-    reset();
+    // 烧录期间持续保持复位高电平 退出时再释放共用引脚
+    reset(false);
   }
 
-  void AddonFlasher::reset() {
+  void AddonFlasher::reset(bool releaseShared) {
     // reset LOW (active) HIGH (inactive)
-    tasks.yield(200);
+    delay(200);
     #ifdef ADDON_RESET_SHARED_INPUT
       // SPI 初始化后引脚为输入 复位前临时切换为输出
       pinModeEx(ADDON_RESET_PIN, OUTPUT);
     #endif
     digitalWriteEx(ADDON_RESET_PIN, LOW);
-    tasks.yield(200);
+    delay(200);
     digitalWriteEx(ADDON_RESET_PIN, HIGH);
-    tasks.yield(200);
+    delay(200);
     #ifdef ADDON_RESET_SHARED_INPUT
-      // 复位结束后释放引脚 供 SPI 读取
-      pinModeEx(ADDON_RESET_PIN, INPUT_PULLUP);
+      // 正常运行时释放引脚 供 SPI 读取
+      if (releaseShared) pinModeEx(ADDON_RESET_PIN, INPUT_PULLUP);
+    #else
+      (void)releaseShared;
     #endif
   }
 
   void AddonFlasher::poll() {
-    #if ADDON_TRIGR_PIN == ON
-      if (ADDON_TRIGR_PIN != OFF && digitalRead(ADDON_TRIGR_PIN) == LOW) go(false);
+    #if ADDON_TRIGR_PIN != OFF
+      if (digitalRead(ADDON_TRIGR_PIN) == LOW) go(false);
     #endif
   }
 

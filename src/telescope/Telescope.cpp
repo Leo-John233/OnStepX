@@ -34,6 +34,20 @@
 bool xBusy = false;
 InitError initError;
 
+#if SERIAL_B_ESP_FLASHING == ON
+// 架台侧提供准入检查 烧录模块不依赖架台实现
+bool addonFlashCanStart() {
+  #if defined(MOUNT_PRESENT) && defined(ADDON_RESET_SHARED_INPUT)
+    // 停稳后进入烧录 不强制中断回零 导星或 GOTO
+    return !mount.isTracking() && !mount.isSlewing() && home.state == HS_NONE &&
+           goTo.state == GS_NONE && guide.state == GU_NONE &&
+           axis1.getFrequencySteps() == 0.0F && axis2.getFrequencySteps() == 0.0F;
+  #else
+    return true;
+  #endif
+}
+#endif
+
 void mcuTempWrapper() { telescope.mcuTemperature = (telescope.mcuTemperature*9.0F + HAL_TEMP())/10.0F; }
 
 #if STATUS_LED != OFF && STATUS_LED_PIN != OFF
@@ -229,7 +243,7 @@ void Telescope::init(const char *fwName, int fwMajor, int fwMinor, const char *f
   #endif
   
   #if SERIAL_B_ESP_FLASHING == ON
-    addonFlasher.init();
+    addonFlasher.init(addonFlashCanStart);
   #endif
 
   mcuTemperature = HAL_TEMP();

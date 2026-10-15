@@ -4,6 +4,8 @@ from run import method, run, source
 
 
 def check(cxx):
+    lifecycle(cxx)
+    admission(cxx)
     run(cxx, 'addon_passthrough_timeout', r'''
 #include <cassert>
 #include <cstdint>
@@ -11,6 +13,8 @@ def check(cxx):
 uint32_t now=0,origin=0;
 uint32_t millis(){return now;}
 void delayMicroseconds(int){}
+int yields=0;
+void yield(){++yields;}
 bool traffic=false;
 struct Port {
  bool host;int writes=0;
@@ -22,24 +26,28 @@ struct Port {
  }
  int read(){return 42;}
  void write(int v){assert(v==42);++writes;}
+ void flush(){}
 } host{true},device{false};
 #define SERIAL_A host
 #define SERIAL_PASSTHROUGH device
 struct AddonFlasher {
  int flashes=0,resumes=0;
- void go(bool);
+ bool go(bool);
+ bool beginSession(){return true;}
+ void endSession(){run(true);}
  void flash(){++flashes;}
  void run(bool restore){assert(restore);++resumes;}
 };
-''' + method('src/telescope/addonFlasher/AddonFlasher.cpp', 'void AddonFlasher::go(') + r'''
+''' + method('src/telescope/addonFlasher/AddonFlasher.cpp', 'bool AddonFlasher::go(') + r'''
 int main(){
  for(int wrap=0;wrap<2;++wrap) for(int active=0;active<2;++active){
-  now=origin=wrap?0xffff0000U:0U;traffic=active;device.writes=0;
+  now=origin=wrap?0xffff0000U:0U;traffic=active;device.writes=0;yields=0;
   AddonFlasher f;f.go(true);
   uint32_t elapsed=now-origin;
   assert(elapsed==(active?151000U:91000U));
   assert(device.writes==(active?111:0));
   assert(f.flashes==1&&f.resumes==1);
+  assert(yields==int(elapsed/1000));
  }
 }
 ''')
@@ -49,17 +57,27 @@ int main(){
 #define ADDON_RESET_PIN 2
 enum {LOW=0,HIGH=1,OUTPUT=2,INPUT_PULLUP=3};
 std::vector<int> events;
-struct {void yield(int ms){assert(ms==200);events.push_back(10);}} tasks;
+void delay(int ms){assert(ms==200);events.push_back(10);}
 void pinModeEx(int pin,int mode){assert(pin==2);events.push_back(mode);}
 void digitalWriteEx(int pin,int value){assert(pin==2);events.push_back(value);}
-struct AddonFlasher {void reset();};
+struct AddonFlasher {void reset(bool releaseShared = true);};
 '''
-    body = method('src/telescope/addonFlasher/AddonFlasher.cpp', 'void AddonFlasher::reset()')
+    body = method('src/telescope/addonFlasher/AddonFlasher.cpp', 'void AddonFlasher::reset(')
     for shared in (False, True):
         expected = '10,2,0,10,1,10,3' if shared else '10,0,10,1,10'
         run(cxx, 'addon_reset_shared' if shared else 'addon_reset_dedicated',
             prefix + body + '\nint main(){AddonFlasher f;for(int i=0;i<2;++i){events.clear();f.reset();assert(events==std::vector<int>({' + expected + '}));}}',
             ['-DADDON_RESET_SHARED_INPUT'] if shared else [])
+
+    run(cxx, 'addon_reset_owned_during_flash', prefix + body + r'''
+int main(){
+ AddonFlasher f;
+ f.reset(false);
+ assert(events==std::vector<int>({10,2,0,10,1,10}));
+ events.clear();f.reset(true);
+ assert(events==std::vector<int>({10,2,0,10,1,10,3}));
+}
+''', ['-DADDON_RESET_SHARED_INPUT'])
 
     pinmap = source('src/pinmaps/Pins.MaxESP4.h')
     base = '#define ESP32\n#define OFF -1\n#define ON 1\n#define SERIAL_A_BAUD_DEFAULT OFF\n#define SERIAL_B_BAUD_DEFAULT OFF\n'
@@ -85,6 +103,109 @@ int main(){}
 static_assert(ADDON_RESET_PIN==32 && ADDON_GPIO0_PIN==33,"Preserve custom pins");
 int main(){}
 ''')
+
+
+def lifecycle(cxx):
+    # 直接编译完整烧录模块 验证双向字节和退出后的引脚恢复
+    run(cxx, 'addon_full_lifecycle', r'''
+#include <cassert>
+#include <cstdint>
+#include <vector>
+#define OFF -1
+#define ON 1
+#define HardSerial -9
+#define SERIAL_PASSTHROUGH device
+#define SERIAL_A host
+#define SERIAL_PASSTHROUGH_BAUD_DEFAULT 9600
+#define SERIAL_A_BAUD_DEFAULT 9600
+#define SERIAL_PASSTHROUGH_RX 16
+#define SERIAL_PASSTHROUGH_TX 17
+#define SERIAL_8N1 0
+#define ADDON_RESET_SHARED_INPUT
+#define ADDON_RESET_PIN 2
+#define ADDON_GPIO0_PIN 26
+#define ADDON_TRIGR_PIN OFF
+#define VF(x)
+#define V(x)
+#define VL(x)
+#define VLF(x)
+enum {LOW=0,HIGH=1,OUTPUT=2,INPUT_PULLUP=3};
+uint32_t now=0;
+int modes[40]={},levels[40]={},yields=0;
+bool checking=false;
+uint32_t millis(){return now;}
+void delay(int ms){now+=ms;}
+void delayMicroseconds(int){}
+void pinModeEx(int p,int m){modes[p]=m;}
+void digitalWriteEx(int p,int v){levels[p]=v;}
+int digitalReadEx(int p){return levels[p];}
+void yield(){
+ ++yields;now+=1000;
+ if(checking){assert(modes[2]==OUTPUT&&levels[2]==HIGH&&levels[26]==LOW);}
+}
+struct Port {
+ int baud=9600;std::vector<int> input,output;
+ void begin(int b){baud=b;}
+ void begin(int b,int,int rx,int tx){assert(rx==16&&tx==17);baud=b;}
+ bool available(){return !input.empty();}
+ int read(){int v=input.front();input.erase(input.begin());return v;}
+ void write(int v){output.push_back(v);}
+ void flush(){}
+} host,device;
+''' + source('src/telescope/addonFlasher/AddonFlasher.h') +
+        source('src/telescope/addonFlasher/AddonFlasher.cpp') + r'''
+int main(){
+ static bool allowed=false;
+ addonFlasher.init([](){return allowed;});
+ assert(modes[2]==INPUT_PULLUP);
+ levels[26]=LOW;
+ uint32_t before=now;
+ assert(!addonFlasher.go(true));
+ assert(now==before&&levels[26]==LOW&&modes[2]==INPUT_PULLUP);
+ assert(host.baud==9600&&device.baud==9600);
+ allowed=true;
+ for(int saved=LOW;saved<=HIGH;++saved){
+  levels[26]=saved;host.input={0,255,192,219};device.input={192,0,255,219};
+  host.output.clear();device.output.clear();checking=true;
+  assert(addonFlasher.go(true));checking=false;
+  assert(host.output==std::vector<int>({192,0,255,219}));
+  assert(device.output==std::vector<int>({0,255,192,219}));
+  assert(host.baud==9600&&device.baud==9600);
+  assert(modes[2]==INPUT_PULLUP&&levels[26]==saved);
+  assert(addonFlasher.canFlash());
+ }
+ assert(yields>0);
+}
+''')
+
+
+def admission(cxx):
+    run(cxx, 'addon_mount_admission', r'''
+#include <cassert>
+#define MOUNT_PRESENT
+#define ADDON_RESET_SHARED_INPUT
+enum {HS_NONE=0,GS_NONE=0,GU_NONE=0};
+struct Mount {
+ bool tracking=false,slewing=false;
+ bool isTracking(){return tracking;}
+ bool isSlewing(){return slewing;}
+} mount;
+struct State {int state=0;} home,goTo,guide;
+struct Axis {float rate=0;float getFrequencySteps(){return rate;}} axis1,axis2;
+''' + method('src/telescope/Telescope.cpp', 'bool addonFlashCanStart(') + r'''
+int main(){
+ assert(addonFlashCanStart());
+ mount.tracking=true;assert(!addonFlashCanStart());mount.tracking=false;
+ mount.slewing=true;assert(!addonFlashCanStart());mount.slewing=false;
+ for(auto p:{&home.state,&goTo.state,&guide.state}){
+  *p=1;assert(!addonFlashCanStart());*p=0;
+ }
+ for(auto p:{&axis1.rate,&axis2.rate}) for(float rate:{-0.01F,0.01F}){
+  *p=rate;assert(!addonFlashCanStart());*p=0;
+ }
+ assert(addonFlashCanStart());
+}
+'''.replace('int main(){', '#include <initializer_list>\nint main(){'))
 
 
 if __name__ == '__main__':

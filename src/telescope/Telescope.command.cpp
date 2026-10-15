@@ -169,11 +169,21 @@ bool Telescope::command(char reply[], char command[], char parameter[], bool *su
     //            Return: 1 on completion (after up to one minute from start of command.)
     #if SERIAL_B_ESP_FLASHING == ON
       if (command[1] == 'S' && parameter[0] == 'P' && parameter[1] == 'F' && parameter[2] == 'L' && parameter[3] == 'A' && parameter[4] == 'S' && parameter[5] == 'H' && parameter[6] == 0) {
+        // 提示烧录前检查 共用引脚忙时保持原运行状态
+        if (!addonFlasher.canFlash()) {
+          *commandError = CE_SLEW_IN_MOTION;
+          return true;
+        }
         SERIAL_A.println("The SWS microcontroller will now be placed in flash upload mode (at 115200 Baud.)");
         SERIAL_A.println("Arduino's 'Tools -> Upload Speed' should be set to 115200 Baud.");
         SERIAL_A.println("Waiting for data, you have one minute to start the upload.");
-        tasks.yield(1000);
-        addonFlasher.go();
+        // 先发完提示 再切换波特率 等待期间不启动新的轴动作
+        SERIAL_A.flush();
+        delay(1000);
+        if (!addonFlasher.go()) {
+          *commandError = CE_SLEW_IN_MOTION;
+          return true;
+        }
         SERIAL_A.println("SWS microcontroller reset and in run mode, resuming operation...");
         tasks.yield(1000);
       } else
