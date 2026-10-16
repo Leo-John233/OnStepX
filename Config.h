@@ -218,7 +218,7 @@
 
 // --- 周期误差修正 ---
 // 文档 https://onstep.groups.io/g/main/wiki/Configuration_Mount#PEC
-#define PEC_STEPS_PER_WORM_ROTATION   51200        // 0, n 蜗杆每转的步数 0 表示禁用 其他值会分配 720 秒缓冲区
+#define PEC_STEPS_PER_WORM_ROTATION   0            // 0, n 蜗杆每转的步数 0 表示禁用 其他值会分配 720 秒缓冲区
                                                    // n = (AXIS1_STEPS_PER_DEGREE*360)/reduction_final_stage
 
 #define PEC_SENSE                     OFF          // OFF, HIGH 检测 PEC 信号上升沿 LOW 检测下降沿

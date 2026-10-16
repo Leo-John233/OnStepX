@@ -409,6 +409,8 @@ if __name__ == '__main__':
     check(args.cxx)
     from addon_flasher import check as check_addon
     check_addon(args.cxx)
+    from pec_storage import check as check_pec
+    check_pec(args.cxx)
     from compatibility import startup, alignment, escape
     startup(args.cxx)
     alignment(args.cxx)

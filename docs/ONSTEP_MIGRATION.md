@@ -311,3 +311,31 @@ MaxESP3 引脚迁移及 MaxESP4 驱动分支和 ESPFLASH 独占会话属于用�
 
 本次只清理配置暴露和纠正 ST4 默认值注释 未回退已确认的迁移功能
 后续优先使用原生配置项迁入数值 不确定的语义差异先向用户确认
+
+## EEPROM 报错核对 2026-10-16
+
+对照迁移前 a81bfb8 与当前代码检查配置 存储初始化 回零 限位 GOTO 泊车
+启动授权 ST4 和透传的改动
+
+确认一处配置迁移遗漏
+旧 OnStep 的 AXIS1_STEPS_PER_WORMROT 为 51200 赤经每度步数为 14222.222
+迁入 OnStepX 后 PEC 周期为 round(51200 / (14222.222 / 240)) 即 864 秒
+但 PEC_BUFFER_SIZE_LIMIT 保留原生默认 720 秒 新建的 PEC 分区不足
+原生 Pec::init 将 initError.value 置位 Limits::errorCode 将其映射为 ERR_NV_INIT
+SmartWebServer 因此显示 NV/EEPROM 初始化错误 并不表示运行内存耗尽
+
+用户确认不使用 PEC 最终将 PEC_STEPS_PER_WORM_ROTATION 设为 0
+保留 PEC_BUFFER_SIZE_LIMIT 为 720 原生 AXIS1_PEC 判定关闭该模块
+不会执行 pec.init 不读取旧 PEC 设置 不分配 PEC 缓冲区 不启动 PEC 任务
+关闭功能无需清空 EEPROM 已有分区保留 其他保存的设置不受影响
+
+迁移未改动 NV 驱动 分区实现和持久化设置结构
+Common.h 和 Constants.h 去除注释及排版后与迁移前一致
+本次未发现其他可解释 EEPROM 报错的迁移改动
+此结论不保证所有硬件和运行状态均无问题
+
+验证使用实际 Pec::init 方法复现 720 字节分区失败和 864 字节分区成功
+编译原生 PEC 开关和 Mount 启动调用验证当前配置不启用 PEC
+现有迁移检查通过 校准检查曾被 Windows 拒绝启动 单独重跑剩余检查通过
+用户暂时无法连接实板 未读取设备中的 PEC 参数 也未执行擦除或刷写
+若关闭 PEC 并重新刷写后仍报错 应读取启动日志区分 NV 初始化失败与其他参数错误
