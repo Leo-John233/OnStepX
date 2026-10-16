@@ -66,7 +66,7 @@
 #define AXIS1_STEPS_PER_DEGREE        14222.222    // 12800, n 每度步数
                                                    // n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
 #define AXIS1_REVERSE                 OFF          // OFF, ON 反转运动方向 也可通过反接电机线修正方向
-#define AXIS1_LIMIT_MIN               -180         // -180, n 其中 n=-90..-360 单位为度 表示最小赤经时角或方位角
+#define AXIS1_LIMIT_MIN              -180          // -180, n 其中 n=-90..-360 单位为度 表示最小赤经时角或方位角
 #define AXIS1_LIMIT_MAX               180          // 180, n 其中 n=90..360 单位为度 表示最大赤经时角或方位角
 #define AXIS1_LIMIT_SYNC              OFF          // OFF, n 其中 n=0..90 单位为度 仅允许在此正负范围内同步或复位
 
@@ -103,7 +103,7 @@
 #define AXIS2_STEPS_PER_DEGREE        14222.222    // 12800, n 每度步数
                                                    // n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
 #define AXIS2_REVERSE                 ON           // OFF, ON 反转运动方向 也可通过反接电机线修正方向
-#define AXIS2_LIMIT_MIN               -90          // -90, n 其中 n=-90..0 单位为度 表示允许的最小赤纬或高度角
+#define AXIS2_LIMIT_MIN              -90           // -90, n 其中 n=-90..0 单位为度 表示允许的最小赤纬或高度角
 #define AXIS2_LIMIT_MAX               90           // 90, n 其中 n=0..90 单位为度 表示允许的最大赤纬或高度角
 #define AXIS2_LIMIT_SYNC              OFF          // OFF, n 其中 n=0..90 单位为度 仅允许在此正负范围内同步或复位
 
